@@ -36,7 +36,14 @@
     "appId": "com.hardware.inventory",
     "productName": "HardwareInventory",
     "win": {
-      "target": "portable"
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Hardware Inventory"
     },
     "files": [
       "dist/**/*",
