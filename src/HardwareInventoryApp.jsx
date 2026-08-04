@@ -3602,45 +3602,103 @@ function QuotationPreviewModal({ quote, settings, onClose }) {
   const cs = settings.currencySymbol;
   return (
     <div className="hw-modal-overlay" onClick={onClose}>
-      <div className="hw-modal hw-receipt-modal" onClick={e => e.stopPropagation()}>
-        <div className="hw-receipt" id="hw-print-area">
-          <div className="hw-receipt-head">
-            <div className="hw-brand-mark small">⛏</div>
-            <div className="hw-receipt-shop">{settings.shopName}</div>
-            <div style={{ fontSize: "11px", fontWeight: "700", textTransform: "uppercase", background: "var(--border)", padding: "2px 8px", borderRadius: "4px", color: "var(--ink)", letterSpacing: "1px", marginTop: "4px" }}>
-              QUOTATION ESTIMATE
+      <div className="hw-modal hw-statement-modal" onClick={e => e.stopPropagation()}>
+        <div className="hw-statement-card" id="hw-print-area">
+          {/* Header Banner */}
+          <div className="hw-statement-banner">
+            <div className="hw-statement-banner-left">
+              <h2 className="hw-statement-shop-name">{settings.shopName}</h2>
+              <span className="hw-statement-shop-phone">System Generated Statement</span>
             </div>
-            <div className="hw-receipt-inv" style={{ marginTop: "6px" }}>{quote.quotationNumber}</div>
+            <div className="hw-statement-banner-logo">
+              <span>⛏</span>
+              <span>DigiKhata Style</span>
+            </div>
           </div>
-          <div className="hw-receipt-meta">
-            <span>{quote.customerName || "Walk-in customer"}</span>
-            <span>{fmtDateTime(quote.date)}</span>
+
+          {/* Title block */}
+          <div className="hw-statement-title-block">
+            <h1 className="hw-statement-title">{quote.customerName || "Walk-in Customer"} Estimate</h1>
+            {quote.customerEmail && <span className="hw-statement-subtitle">Contact: {quote.customerEmail}</span>}
+            <span className="hw-statement-date-range">Generated: {fmtDateTime(quote.date)}</span>
           </div>
-          <div className="hw-receipt-divider" />
-          <table className="hw-receipt-table">
-            <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Amount</th></tr></thead>
-            <tbody>
-              {quote.items.map((i, idx) => (
-                <tr key={idx}>
-                  <td>{i.name}<span className="hw-il-meta"> ({i.unit})</span></td>
-                  <td className="hw-mono">{i.qty}</td>
-                  <td className="hw-mono">{cs}{fmtNum(i.price)}</td>
-                  <td className="hw-mono">{cs}{fmtNum(i.lineTotal)}</td>
+
+          {/* Summary Box */}
+          <div className="hw-statement-summary-box">
+            <div className="hw-statement-summary-col">
+              <span className="hw-statement-summary-label">Subtotal</span>
+              <span className="hw-statement-summary-value">{cs}{fmtNum(quote.subtotal)}</span>
+            </div>
+            <div className="hw-statement-summary-col">
+              <span className="hw-statement-summary-label">Discount (-)</span>
+              <span className="hw-statement-summary-value red">{cs}{fmtNum(quote.discount)}</span>
+            </div>
+            <div className="hw-statement-summary-col">
+              <span className="hw-statement-summary-label">Estimate Total</span>
+              <span className="hw-statement-summary-value green">{cs}{fmtNum(quote.total)}</span>
+              <span className="hw-statement-summary-sub">(quotation only)</span>
+            </div>
+            <div className="hw-statement-summary-col">
+              <span className="hw-statement-summary-label">Quote Number</span>
+              <span className="hw-statement-summary-value" style={{ fontSize: "14px" }}>{quote.quotationNumber}</span>
+            </div>
+          </div>
+
+          {/* Entries Count Info */}
+          <div className="hw-statement-entries-info">
+            No. of Items: {quote.items.length} (All)
+          </div>
+
+          {/* Items Table */}
+          <div className="hw-statement-table-wrap">
+            <table className="hw-statement-table">
+              <thead>
+                <tr>
+                  <th style={{ width: "40px" }}>#</th>
+                  <th>Details</th>
+                  <th style={{ textAlign: "right" }}>Qty</th>
+                  <th style={{ textAlign: "right" }}>Price</th>
+                  <th style={{ textAlign: "right" }}>Amount</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="hw-receipt-divider" />
-          <div className="hw-receipt-totals">
-            <div><span>Subtotal</span><span className="hw-mono">{cs}{fmtNum(quote.subtotal)}</span></div>
-            {quote.discount > 0 && <div><span>Discount</span><span className="hw-mono">-{cs}{fmtNum(quote.discount)}</span></div>}
-            <div className="hw-receipt-total-final"><span>Total</span><span className="hw-mono">{cs}{fmtNum(quote.total)}</span></div>
+              </thead>
+              <tbody>
+                {quote.items.map((i, idx) => (
+                  <tr key={idx}>
+                    <td>{idx + 1}</td>
+                    <td>
+                      <span style={{ fontWeight: 600, color: "#111827" }}>{i.name}</span>
+                      <span style={{ fontSize: "11px", color: "#6B7280", marginLeft: "6px" }}>({i.unit})</span>
+                    </td>
+                    <td className="mono" style={{ textAlign: "right" }}>{i.qty}</td>
+                    <td className="mono" style={{ textAlign: "right" }}>{cs}{fmtNum(i.price)}</td>
+                    <td className="mono green" style={{ textAlign: "right" }}>{cs}{fmtNum(i.lineTotal)}</td>
+                  </tr>
+                ))}
+                {/* Grand Total Row */}
+                <tr className="hw-statement-table-totals">
+                  <td colSpan={2}>Grand Total</td>
+                  <td style={{ textAlign: "right" }}>{quote.items.reduce((s, i) => s + i.qty, 0)}</td>
+                  <td></td>
+                  <td className="green" style={{ textAlign: "right" }}>{cs}{fmtNum(quote.total)}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <div className="hw-receipt-foot">This is an estimate. Prices are valid for 7 days.</div>
-          <div className="hw-receipt-teeth" />
+
+          {/* Footer Banner */}
+          <div className="hw-statement-footer">
+            <div className="hw-statement-footer-left">
+              <span>Start Using {settings.shopName}</span>
+              <button type="button" className="hw-statement-btn-install">ESTIMATE</button>
+            </div>
+            <div className="hw-statement-footer-right">
+              <span>Prices are valid for 7 days.</span>
+            </div>
+          </div>
         </div>
 
-        <div className="hw-modal-actions hw-no-print">
+        {/* Action buttons */}
+        <div className="hw-modal-actions hw-no-print" style={{ padding: "16px 24px", background: "#F9FAFB", borderTop: "1px solid #E5E7EB" }}>
           <div style={{ flex: 1 }} />
           <button className="hw-btn-ghost" onClick={onClose}>Close</button>
           <button className="hw-btn-accent" onClick={() => window.print()}><Printer size={14} /> Print / Export</button>
@@ -4011,42 +4069,103 @@ function InvoicePreviewModal({ invoice, settings, onClose, onDelete }) {
 
   return (
     <div className="hw-modal-overlay" onClick={onClose}>
-      <div className="hw-modal hw-receipt-modal" onClick={e => e.stopPropagation()}>
-        <div className="hw-receipt" id="hw-print-area">
-          <div className="hw-receipt-head">
-            <div className="hw-brand-mark small">⛏</div>
-            <div className="hw-receipt-shop">{settings.shopName}</div>
-            <div className="hw-receipt-inv">{invoice.invoiceNumber}</div>
+      <div className="hw-modal hw-statement-modal" onClick={e => e.stopPropagation()}>
+        <div className="hw-statement-card" id="hw-print-area">
+          {/* Header Banner */}
+          <div className="hw-statement-banner">
+            <div className="hw-statement-banner-left">
+              <h2 className="hw-statement-shop-name">{settings.shopName}</h2>
+              <span className="hw-statement-shop-phone">System Generated Statement</span>
+            </div>
+            <div className="hw-statement-banner-logo">
+              <span>⛏</span>
+              <span>DigiKhata Style</span>
+            </div>
           </div>
-          <div className="hw-receipt-meta">
-            <span>{invoice.customerName || "Walk-in customer"}</span>
-            <span>{fmtDateTime(invoice.date)}</span>
+
+          {/* Title block */}
+          <div className="hw-statement-title-block">
+            <h1 className="hw-statement-title">{invoice.customerName || "Walk-in Customer"} Statement</h1>
+            {invoice.customerEmail && <span className="hw-statement-subtitle">Contact: {invoice.customerEmail}</span>}
+            <span className="hw-statement-date-range">Generated: {fmtDateTime(invoice.date)}</span>
           </div>
-          <div className="hw-receipt-divider" />
-          <table className="hw-receipt-table">
-            <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Amount</th></tr></thead>
-            <tbody>
-              {invoice.items.map((i, idx) => (
-                <tr key={idx}>
-                  <td>{i.name}<span className="hw-il-meta"> ({i.unit})</span></td>
-                  <td className="hw-mono">{i.qty}</td>
-                  <td className="hw-mono">{cs}{fmtNum(i.price)}</td>
-                  <td className="hw-mono">{cs}{fmtNum(i.lineTotal)}</td>
+
+          {/* Summary Box */}
+          <div className="hw-statement-summary-box">
+            <div className="hw-statement-summary-col">
+              <span className="hw-statement-summary-label">Subtotal</span>
+              <span className="hw-statement-summary-value">{cs}{fmtNum(invoice.subtotal)}</span>
+            </div>
+            <div className="hw-statement-summary-col">
+              <span className="hw-statement-summary-label">Discount (-)</span>
+              <span className="hw-statement-summary-value red">{cs}{fmtNum(invoice.discount)}</span>
+            </div>
+            <div className="hw-statement-summary-col">
+              <span className="hw-statement-summary-label">Net Balance</span>
+              <span className="hw-statement-summary-value green">{cs}{fmtNum(invoice.total)}</span>
+              <span className="hw-statement-summary-sub">(settled)</span>
+            </div>
+            <div className="hw-statement-summary-col">
+              <span className="hw-statement-summary-label">Ref Number</span>
+              <span className="hw-statement-summary-value" style={{ fontSize: "14px" }}>{invoice.invoiceNumber}</span>
+            </div>
+          </div>
+
+          {/* Entries Count Info */}
+          <div className="hw-statement-entries-info">
+            No. of Items: {invoice.items.length} (All)
+          </div>
+
+          {/* Items Table */}
+          <div className="hw-statement-table-wrap">
+            <table className="hw-statement-table">
+              <thead>
+                <tr>
+                  <th style={{ width: "40px" }}>#</th>
+                  <th>Details</th>
+                  <th style={{ textAlign: "right" }}>Qty</th>
+                  <th style={{ textAlign: "right" }}>Price</th>
+                  <th style={{ textAlign: "right" }}>Amount</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="hw-receipt-divider" />
-          <div className="hw-receipt-totals">
-            <div><span>Subtotal</span><span className="hw-mono">{cs}{fmtNum(invoice.subtotal)}</span></div>
-            {invoice.discount > 0 && <div><span>Discount</span><span className="hw-mono">-{cs}{fmtNum(invoice.discount)}</span></div>}
-            <div className="hw-receipt-total-final"><span>Total</span><span className="hw-mono">{cs}{fmtNum(invoice.total)}</span></div>
+              </thead>
+              <tbody>
+                {invoice.items.map((i, idx) => (
+                  <tr key={idx}>
+                    <td>{idx + 1}</td>
+                    <td>
+                      <span style={{ fontWeight: 600, color: "#111827" }}>{i.name}</span>
+                      <span style={{ fontSize: "11px", color: "#6B7280", marginLeft: "6px" }}>({i.unit})</span>
+                    </td>
+                    <td className="mono" style={{ textAlign: "right" }}>{i.qty}</td>
+                    <td className="mono" style={{ textAlign: "right" }}>{cs}{fmtNum(i.price)}</td>
+                    <td className="mono green" style={{ textAlign: "right" }}>{cs}{fmtNum(i.lineTotal)}</td>
+                  </tr>
+                ))}
+                {/* Grand Total Row */}
+                <tr className="hw-statement-table-totals">
+                  <td colSpan={2}>Grand Total</td>
+                  <td style={{ textAlign: "right" }}>{invoice.items.reduce((s, i) => s + i.qty, 0)}</td>
+                  <td></td>
+                  <td className="green" style={{ textAlign: "right" }}>{cs}{fmtNum(invoice.total)}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <div className="hw-receipt-foot">Thank you for your business.</div>
-          <div className="hw-receipt-teeth" />
+
+          {/* Footer Banner */}
+          <div className="hw-statement-footer">
+            <div className="hw-statement-footer-left">
+              <span>Start Using {settings.shopName}</span>
+              <button type="button" className="hw-statement-btn-install">ACTIVE</button>
+            </div>
+            <div className="hw-statement-footer-right">
+              <span>Thank you for your business.</span>
+            </div>
+          </div>
         </div>
 
-        <div className="hw-modal-actions hw-no-print">
+        {/* Action buttons */}
+        <div className="hw-modal-actions hw-no-print" style={{ padding: "16px 24px", background: "#F9FAFB", borderTop: "1px solid #E5E7EB" }}>
           {onDelete && !confirmDelete && (
             <button className="hw-btn-danger" onClick={() => setConfirmDelete(true)}><Trash2 size={14} /> Delete</button>
           )}
@@ -4058,7 +4177,7 @@ function InvoicePreviewModal({ invoice, settings, onClose, onDelete }) {
           )}
           <div style={{ flex: 1 }} />
           <button className="hw-btn-ghost" onClick={onClose}>Close</button>
-          <button className="hw-btn-accent" onClick={() => window.print()}><Printer size={14} /> Print</button>
+          <button className="hw-btn-accent" onClick={() => window.print()}><Printer size={14} /> Print / Export</button>
         </div>
       </div>
     </div>
@@ -4437,6 +4556,64 @@ function Style() {
       .hw-receipt-total-final { font-family: var(--font-display); font-size: 18px; font-weight: 600; border-top: 1px solid var(--border); margin-top: 4px; padding-top: 8px !important; }
       .hw-receipt-foot { text-align: center; font-size: 11.5px; color: var(--ink-soft); margin-top: 14px; font-style: italic; }
       .hw-receipt-teeth { height: 10px; margin: 10px -22px -14px; background: repeating-linear-gradient(90deg, transparent 0 6px, var(--bg) 6px 12px); }
+
+      /* STATEMENT REPORT (DIGIKHATA STYLE) */
+      .hw-statement-modal { max-width: 720px; padding: 0; width: 100%; overflow: visible; background: transparent; }
+      .hw-statement-card { background: #FFFFFF; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); font-family: var(--font-body); display: flex; flex-direction: column; width: 100%; position: relative; }
+      
+      /* Orange Top Banner */
+      .hw-statement-banner { background: #EA580C; color: #FFFFFF; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
+      .hw-statement-banner-left { display: flex; flex-direction: column; gap: 4px; }
+      .hw-statement-shop-name { font-size: 20px; font-weight: 700; font-family: var(--font-display); letter-spacing: -0.2px; margin: 0; }
+      .hw-statement-shop-phone { font-size: 13px; opacity: 0.9; }
+      .hw-statement-banner-logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; background: rgba(255, 255, 255, 0.15); padding: 6px 12px; border-radius: 6px; }
+
+      /* Title Section */
+      .hw-statement-title-block { text-align: center; padding: 24px 24px 16px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+      .hw-statement-title { font-size: 24px; font-weight: 700; color: #111827; margin: 0; font-family: var(--font-display); }
+      .hw-statement-subtitle { font-size: 13px; color: #4B5563; margin: 0; font-weight: 500; }
+      .hw-statement-date-range { font-size: 12px; color: #6B7280; font-weight: 500; }
+
+      /* Summary Box */
+      .hw-statement-summary-box { border: 1px solid #E5E7EB; border-radius: 8px; margin: 0 24px 20px; display: grid; grid-template-columns: repeat(4, 1fr); background: #FAFBFD; overflow: hidden; }
+      .hw-statement-summary-col { padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; border-right: 1px solid #E5E7EB; }
+      .hw-statement-summary-col:last-child { border-right: none; }
+      .hw-statement-summary-label { font-size: 11px; font-weight: 600; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; }
+      .hw-statement-summary-value { font-size: 18px; font-weight: 700; color: #111827; font-family: var(--font-mono); }
+      .hw-statement-summary-value.red { color: #DC2626; }
+      .hw-statement-summary-value.green { color: #16A34A; }
+      .hw-statement-summary-sub { font-size: 10px; color: #9CA3AF; }
+
+      /* Entries Count Info */
+      .hw-statement-entries-info { font-size: 13px; font-weight: 700; color: #111827; margin: 0 24px 8px; }
+
+      /* Statement Table */
+      .hw-statement-table-wrap { border: 1px solid #E5E7EB; border-radius: 8px; margin: 0 24px 24px; overflow: hidden; }
+      .hw-statement-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+      .hw-statement-table th { background: #F3F4F6; padding: 10px 14px; font-weight: 600; color: #374151; font-size: 12px; border-bottom: 1px solid #E5E7EB; }
+      .hw-statement-table td { padding: 12px 14px; border-bottom: 1px solid #F3F4F6; color: #4B5563; }
+      .hw-statement-table tbody tr:last-child td { border-bottom: none; }
+      .hw-statement-table td.mono { font-family: var(--font-mono); font-weight: 500; }
+      .hw-statement-table td.green { color: #16A34A; font-weight: 600; }
+      .hw-statement-table td.red { color: #DC2626; font-weight: 600; }
+
+      /* Grand Total Row */
+      .hw-statement-table-totals { background: #F9FAFB; border-top: 2px solid #E5E7EB; font-weight: 700 !important; color: #111827 !important; }
+      .hw-statement-table-totals td { font-weight: 700; color: #111827; }
+
+      /* Footer Banner */
+      .hw-statement-footer { background: #EA580C; color: #FFFFFF; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 500; }
+      .hw-statement-footer-left { display: flex; align-items: center; gap: 8px; }
+      .hw-statement-footer-right { display: flex; align-items: center; gap: 4px; }
+      .hw-statement-btn-install { background: #FFFFFF; color: #EA580C; border: none; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+
+      @media print {
+        .hw-statement-banner { background-color: #EA580C !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .hw-statement-footer { background-color: #EA580C !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .hw-statement-summary-box { background-color: #FAFBFD !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .hw-statement-table th { background-color: #F3F4F6 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .hw-statement-table-totals { background-color: #F9FAFB !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      }
 
       @media print {
         body * { visibility: hidden; }
