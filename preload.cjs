@@ -11,4 +11,6 @@ contextBridge.exposeInMainWorld('db', {
   saveExpenses: (expenses) => ipcRenderer.invoke('db:save-expenses', expenses),
   saveSettings: (settings) => ipcRenderer.invoke('db:save-settings', settings),
   sendInvoiceEmail: (invoice, user) => ipcRenderer.invoke('db:send-invoice-email', invoice, user),
+  requestResetOtp: (email) => ipcRenderer.invoke('auth:request-reset-otp', email),
+  confirmPasswordReset: (email, otp, newPassword) => ipcRenderer.invoke('auth:reset-password-confirm', email, otp, newPassword),
 });

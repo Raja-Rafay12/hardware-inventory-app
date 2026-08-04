@@ -70,6 +70,70 @@ async function sendWelcomeEmail(toEmail, firstName, organizationName) {
   }
 }
 
+// Map to cache OTPs: Email -> { otpCode, expiresAt }
+const resetOtps = new Map();
+
+// Helper to send password reset verification email via Google SMTP
+async function sendResetPasswordEmail(toEmail, otpCode) {
+  const host = process.env.SMTP_HOST;
+  const port = process.env.SMTP_PORT;
+  const secure = process.env.SMTP_SECURE === 'true';
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+  const from = process.env.SMTP_FROM || `"Hardware Inventory" <${user}>`;
+
+  if (!host || !user || !pass) {
+    console.log("Google SMTP not configured in .env. Skipping password reset email dispatch.");
+    throw new Error("SMTP server is not configured. Cannot send reset email.");
+  }
+
+  try {
+    const transporter = nodemailer.createTransport({
+      host,
+      port: parseInt(port) || 465,
+      secure,
+      auth: {
+        user,
+        pass
+      }
+    });
+
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 25px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #ffffff; color: #333333;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h2 style="color: #d9720b; margin: 0; padding-bottom: 10px; border-bottom: 2px solid #d9720b;">Password Reset Verification</h2>
+        </div>
+        <p>Hello,</p>
+        <p>We received a request to reset the password for your account associated with this email address.</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <span style="font-size: 28px; font-weight: 700; color: #d9720b; letter-spacing: 4px; background-color: #fcfbf7; border: 1px dashed #d9720b; padding: 10px 20px; border-radius: 4px;">${otpCode}</span>
+        </div>
+        <p>This verification code is valid for <strong>10 minutes</strong>. If you did not make this request, you can safely ignore this email; your password will remain unchanged.</p>
+        <br/>
+        <div style="background-color: #fcfbf7; border-left: 4px solid #d9720b; padding: 15px; font-size: 13px; color: #666666; border-radius: 4px; line-height: 1.5;">
+          <strong>Security Notice:</strong> Never share this verification code with anyone. App administrators will never ask for this code.
+        </div>
+        <br/>
+        <p style="font-size: 12px; color: #999999; text-align: center; border-top: 1px solid #eeeeee; padding-top: 15px; margin-bottom: 0;">
+          Sent automatically via Google SMTP.
+        </p>
+      </div>
+    `;
+
+    await transporter.sendMail({
+      from,
+      to: toEmail,
+      subject: "Hardware Inventory App - Password Reset Verification Code",
+      html: htmlContent
+    });
+    console.log(`Password reset verification email successfully sent to ${toEmail}`);
+  } catch (err) {
+    console.error("Failed to send password reset email via Google SMTP:", err);
+    throw err;
+  }
+}
+
+
 // Helper to remove null bytes and malformed UTF-16 surrogate pairs that generate invalid UTF-8 byte sequences
 function cleanString(val) {
   if (typeof val !== 'string') return val;
@@ -212,6 +276,72 @@ ipcMain.handle('auth:logout', () => {
   currentUserId = null;
   return { success: true };
 });
+
+ipcMain.handle('auth:request-reset-otp', async (event, email) => {
+  try {
+    const formattedEmail = String(email).trim().toLowerCase();
+    
+    // Check if the user exists
+    const result = await pool.query('SELECT id FROM public.users WHERE email = $1', [formattedEmail]);
+    if (result.rows.length === 0) {
+      throw new Error('No account found with this email address.');
+    }
+    
+    // Generate a 6-digit random code
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes expiry
+    
+    // Store in cache
+    resetOtps.set(formattedEmail, { otpCode, expiresAt });
+    
+    // Send email
+    await sendResetPasswordEmail(formattedEmail, otpCode);
+    
+    return { success: true, message: 'Verification email sent. Please check your inbox.' };
+  } catch (err) {
+    console.error("Request reset OTP error:", err);
+    throw new Error(err.message || 'Failed to send verification code.');
+  }
+});
+
+ipcMain.handle('auth:reset-password-confirm', async (event, email, otp, newPassword) => {
+  try {
+    const formattedEmail = String(email).trim().toLowerCase();
+    const cleanOtp = String(otp).trim();
+    
+    // Check cache
+    const cacheEntry = resetOtps.get(formattedEmail);
+    if (!cacheEntry) {
+      throw new Error('No reset request found for this email address. Please request a new code.');
+    }
+    
+    // Check expiry
+    if (Date.now() > cacheEntry.expiresAt) {
+      resetOtps.delete(formattedEmail);
+      throw new Error('Verification code has expired. Please request a new code.');
+    }
+    
+    // Match OTP code
+    if (cacheEntry.otpCode !== cleanOtp) {
+      throw new Error('Invalid verification code.');
+    }
+    
+    // Hash password
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    
+    // Update user in database
+    await pool.query('UPDATE public.users SET password_hash = $1 WHERE email = $2', [passwordHash, formattedEmail]);
+    
+    // Clear cache entry
+    resetOtps.delete(formattedEmail);
+    
+    return { success: true, message: 'Password has been reset successfully.' };
+  } catch (err) {
+    console.error("Confirm reset password error:", err);
+    throw new Error(err.message || 'Failed to reset password.');
+  }
+});
+
 
 ipcMain.handle('auth:current-user', async () => {
   if (!currentUserId) return null;

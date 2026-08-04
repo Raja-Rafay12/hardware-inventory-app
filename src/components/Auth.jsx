@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { Loader2, KeyRound, Mail, AlertTriangle, Eye, EyeOff, Check, X, ShieldAlert } from 'lucide-react';
 
 function Auth({ onAuthSuccess }) {
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [mode, setMode] = useState('login'); // 'login', 'signup', 'forgot', 'otp'
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [organizationName, setOrganizationName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [otp, setOtp] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -21,21 +22,35 @@ function Auth({ onAuthSuccess }) {
   const hasNumber = /[0-9]/.test(password);
   const passwordsMatch = password === confirmPassword;
 
-  const isFormValid = !isSignUp ? (email && password) : (
-    firstName.trim() &&
-    lastName.trim() &&
-    organizationName.trim() &&
-    isEmailValid &&
-    hasMinLength &&
-    hasCapital &&
-    hasNumber &&
-    passwordsMatch
-  );
+  let isFormValid = false;
+  if (mode === 'login') {
+    isFormValid = !!(email && password);
+  } else if (mode === 'signup') {
+    isFormValid = !!(
+      firstName.trim() &&
+      lastName.trim() &&
+      organizationName.trim() &&
+      isEmailValid &&
+      hasMinLength &&
+      hasCapital &&
+      hasNumber &&
+      passwordsMatch
+    );
+  } else if (mode === 'forgot') {
+    isFormValid = isEmailValid;
+  } else if (mode === 'otp') {
+    isFormValid = otp.trim().length === 6 && hasMinLength && hasCapital && hasNumber && passwordsMatch;
+  }
+
+  const isSignUp = mode === 'signup';
 
   const handleAuth = async (e) => {
     e.preventDefault();
-    if (isSignUp) {
-      if (!firstName || !lastName || !organizationName) {
+    setError(null);
+    setInfoMessage(null);
+
+    if (mode === 'signup') {
+      if (!firstName.trim() || !lastName.trim() || !organizationName.trim()) {
         setError('Please fill in all profile fields');
         return;
       }
@@ -51,19 +66,35 @@ function Auth({ onAuthSuccess }) {
         setError('Passwords do not match');
         return;
       }
-    } else {
+    } else if (mode === 'login') {
       if (!email || !password) {
         setError('Please fill in all fields');
+        return;
+      }
+    } else if (mode === 'forgot') {
+      if (!isEmailValid) {
+        setError('Please enter a valid email address');
+        return;
+      }
+    } else if (mode === 'otp') {
+      if (otp.trim().length !== 6) {
+        setError('Please enter the 6-digit code');
+        return;
+      }
+      if (!hasMinLength || !hasCapital || !hasNumber) {
+        setError('Password does not meet all security requirements');
+        return;
+      }
+      if (!passwordsMatch) {
+        setError('Passwords do not match');
         return;
       }
     }
 
     setLoading(true);
-    setError(null);
-    setInfoMessage(null);
 
     try {
-      if (isSignUp) {
+      if (mode === 'signup') {
         const user = await window.db.signup({
           firstName,
           lastName,
@@ -75,11 +106,28 @@ function Auth({ onAuthSuccess }) {
         if (onAuthSuccess) {
           setTimeout(() => onAuthSuccess(user), 800);
         }
-      } else {
+      } else if (mode === 'login') {
         const user = await window.db.login(email, password);
         if (onAuthSuccess) {
           onAuthSuccess(user);
         }
+      } else if (mode === 'forgot') {
+        await window.db.requestResetOtp(email);
+        setInfoMessage('Verification code sent to your email. Please check your inbox.');
+        // Clear password fields for reset
+        setPassword('');
+        setConfirmPassword('');
+        setMode('otp');
+      } else if (mode === 'otp') {
+        await window.db.confirmPasswordReset(email, otp, password);
+        setInfoMessage('Password reset successfully! Redirecting to login...');
+        setOtp('');
+        setPassword('');
+        setConfirmPassword('');
+        setTimeout(() => {
+          setMode('login');
+          setInfoMessage(null);
+        }, 1500);
       }
     } catch (err) {
       console.error(err);
@@ -89,9 +137,14 @@ function Auth({ onAuthSuccess }) {
     }
   };
 
+  const overlayMessage = 
+    mode === 'signup' ? "Creating your account & sending welcome mail..." : 
+    mode === 'login' ? "Logging in, please wait..." : 
+    mode === 'forgot' ? "Sending verification code..." : "Resetting password...";
+
   return (
     <div style={styles.container}>
-      {loading && <LoadingOverlay message={isSignUp ? "Creating your account & sending welcome mail..." : "Logging in, please wait..."} />}
+      {loading && <LoadingOverlay message={overlayMessage} />}
       <style>{`
         .auth-card {
           width: 100%;
@@ -314,10 +367,9 @@ function Auth({ onAuthSuccess }) {
           <div className="auth-alert auth-alert-info">
             <div>{infoMessage}</div>
           </div>
-        )}
-
-        <form onSubmit={handleAuth}>
-          {isSignUp && (
+        )}        <form onSubmit={handleAuth}>
+          {/* signup fields */}
+          {mode === 'signup' && (
             <>
               <div style={{ display: 'flex', gap: '12px', marginBottom: '18px' }}>
                 <div style={{ flex: 1 }}>
@@ -361,50 +413,98 @@ function Auth({ onAuthSuccess }) {
             </>
           )}
 
-          <div className="auth-field">
-            <label className="auth-label">EMAIL ADDRESS</label>
-            <div className="auth-input-wrapper">
-              <Mail size={16} className="auth-input-icon" />
-              <input
-                type="email"
-                className="auth-input"
-                placeholder="your@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-                required
-              />
+          {/* email field - rendered in all modes except OTP */}
+          {mode !== 'otp' && (
+            <div className="auth-field">
+              <label className="auth-label">EMAIL ADDRESS</label>
+              <div className="auth-input-wrapper">
+                <Mail size={16} className="auth-input-icon" />
+                <input
+                  type="email"
+                  className="auth-input"
+                  placeholder="your@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading}
+                  required
+                />
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="auth-field">
-            <label className="auth-label">PASSWORD</label>
-            <div className="auth-input-wrapper">
-              <KeyRound size={16} className="auth-input-icon" />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                className="auth-input"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-                required
-              />
-              <button
-                type="button"
-                className="auth-eye-btn"
-                onClick={() => setShowPassword(!showPassword)}
-                disabled={loading}
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
+          {/* OTP field - only in otp mode */}
+          {mode === 'otp' && (
+            <div className="auth-field">
+              <label className="auth-label">6-DIGIT VERIFICATION CODE</label>
+              <div className="auth-input-wrapper">
+                <KeyRound size={16} className="auth-input-icon" />
+                <input
+                  type="text"
+                  className="auth-input"
+                  placeholder="123456"
+                  maxLength={6}
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} // only digits
+                  disabled={loading}
+                  style={{ textAlign: 'center', letterSpacing: '4px', fontWeight: 'bold', fontSize: '16px' }}
+                  required
+                />
+              </div>
             </div>
-          </div>
+          )}
 
-          {isSignUp && (
+          {/* password field - rendered in signup, login, and otp modes */}
+          {(mode === 'login' || mode === 'signup' || mode === 'otp') && (
+            <div className="auth-field">
+              <label className="auth-label">
+                {mode === 'otp' ? 'NEW PASSWORD' : 'PASSWORD'}
+              </label>
+              <div className="auth-input-wrapper">
+                <KeyRound size={16} className="auth-input-icon" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  className="auth-input"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                  required
+                />
+                <button
+                  type="button"
+                  className="auth-eye-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={loading}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              {/* forgot password link - only in login mode */}
+              {mode === 'login' && (
+                <div style={{ textAlign: 'right', marginTop: '6px' }}>
+                  <button
+                    type="button"
+                    style={{ border: 'none', background: 'transparent', color: '#D9720B', fontSize: '12px', cursor: 'pointer', padding: 0 }}
+                    onClick={() => {
+                      setMode('forgot');
+                      setError(null);
+                      setInfoMessage(null);
+                    }}
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* re-enter password field - in signup and otp modes */}
+          {(mode === 'signup' || mode === 'otp') && (
             <>
               <div className="auth-field">
-                <label className="auth-label">RE-ENTER PASSWORD</label>
+                <label className="auth-label">
+                  {mode === 'otp' ? 'RE-ENTER NEW PASSWORD' : 'RE-ENTER PASSWORD'}
+                </label>
                 <div className="auth-input-wrapper">
                   <KeyRound size={16} className="auth-input-icon" />
                   <input
@@ -424,10 +524,12 @@ function Auth({ onAuthSuccess }) {
                   <ShieldAlert size={14} style={{ color: '#D9720B' }} />
                   <span>Security Requirements</span>
                 </div>
-                <div className={`validation-item ${isEmailValid ? 'valid' : 'invalid'}`}>
-                  {isEmailValid ? <Check size={13} style={{ color: '#2E6A3E' }} /> : <X size={13} style={{ color: '#A03333' }} />}
-                  <span>Valid Email address (contains @)</span>
-                </div>
+                {mode === 'signup' && (
+                  <div className={`validation-item ${isEmailValid ? 'valid' : 'invalid'}`}>
+                    {isEmailValid ? <Check size={13} style={{ color: '#2E6A3E' }} /> : <X size={13} style={{ color: '#A03333' }} />}
+                    <span>Valid Email address (contains @)</span>
+                  </div>
+                )}
                 <div className={`validation-item ${hasMinLength ? 'valid' : 'invalid'}`}>
                   {hasMinLength ? <Check size={13} style={{ color: '#2E6A3E' }} /> : <X size={13} style={{ color: '#A03333' }} />}
                   <span>Minimum 8 characters</span>
@@ -452,33 +554,75 @@ function Auth({ onAuthSuccess }) {
             {loading ? (
               <>
                 <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
-                {isSignUp ? 'Creating Account...' : 'Logging In...'}
+                {mode === 'signup' ? 'Creating Account...' :
+                 mode === 'login' ? 'Logging In...' :
+                 mode === 'forgot' ? 'Sending Code...' : 'Resetting Password...'}
               </>
             ) : (
-              isSignUp ? 'Create Account' : 'Log In'
+              mode === 'signup' ? 'Create Account' :
+              mode === 'login' ? 'Log In' :
+              mode === 'forgot' ? 'Send Verification Code' : 'Reset Password'
             )}
           </button>
         </form>
 
         <div className="auth-toggle">
-          {isSignUp ? 'Already have an account?' : "Don't have an account?"}
-          <button
-            type="button"
-            className="auth-toggle-btn"
-            onClick={() => {
-              setIsSignUp(!isSignUp);
-              setError(null);
-              setInfoMessage(null);
-              // Clear signup fields
-              setFirstName('');
-              setLastName('');
-              setOrganizationName('');
-              setConfirmPassword('');
-            }}
-            disabled={loading}
-          >
-            {isSignUp ? 'Log In' : 'Create Account'}
-          </button>
+          {mode === 'signup' && (
+            <>
+              Already have an account?
+              <button
+                type="button"
+                className="auth-toggle-btn"
+                onClick={() => {
+                  setMode('login');
+                  setError(null);
+                  setInfoMessage(null);
+                  setFirstName('');
+                  setLastName('');
+                  setOrganizationName('');
+                  setConfirmPassword('');
+                }}
+                disabled={loading}
+              >
+                Log In
+              </button>
+            </>
+          )}
+          {mode === 'login' && (
+            <>
+              Don't have an account?
+              <button
+                type="button"
+                className="auth-toggle-btn"
+                onClick={() => {
+                  setMode('signup');
+                  setError(null);
+                  setInfoMessage(null);
+                }}
+                disabled={loading}
+              >
+                Create Account
+              </button>
+            </>
+          )}
+          {(mode === 'forgot' || mode === 'otp') && (
+            <button
+              type="button"
+              className="auth-toggle-btn"
+              onClick={() => {
+                setMode('login');
+                setError(null);
+                setInfoMessage(null);
+                setOtp('');
+                setPassword('');
+                setConfirmPassword('');
+              }}
+              disabled={loading}
+              style={{ marginLeft: 0 }}
+            >
+              Back to Log In
+            </button>
+          )}
         </div>
       </div>
     </div>
