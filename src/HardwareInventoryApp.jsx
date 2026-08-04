@@ -2224,6 +2224,35 @@ function Inventory({ products, settings, persistProducts, showToast }) {
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkEditType, setBulkEditType] = useState(null); // "category" | "markup" | "stock" | null
 
+  const [excelData, setExcelData] = useState([]);
+  const [excelHeaders, setExcelHeaders] = useState([]);
+  const [excelMappings, setExcelMappings] = useState({
+    name: -1,
+    quantity: -1,
+    unit: -1,
+    costPrice: -1,
+    salePrice: -1,
+    category: -1,
+    lowStock: -1
+  });
+  const [showExcelMapper, setShowExcelMapper] = useState(false);
+  const [hasHeaderRow, setHasHeaderRow] = useState(true);
+
+  const displayHeaders = useMemo(() => {
+    if (!excelData || excelData.length === 0) return [];
+    const columnsCount = excelHeaders.length;
+    const getColumnLetter = (colIdx) => {
+      let letter = "";
+      let temp = colIdx;
+      while (temp >= 0) {
+        letter = String.fromCharCode((temp % 26) + 65) + letter;
+        temp = Math.floor(temp / 26) - 1;
+      }
+      return letter;
+    };
+    return hasHeaderRow ? excelHeaders : Array.from({ length: columnsCount }, (_, i) => `Column ${getColumnLetter(i)}`);
+  }, [hasHeaderRow, excelHeaders, excelData]);
+
   const handleExcelUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -2235,139 +2264,203 @@ function Inventory({ products, settings, persistProducts, showToast }) {
         const wb = XLSX.read(bstr, { type: 'binary' });
         const wsname = wb.SheetNames[0];
         const ws = wb.Sheets[wsname];
-        const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
+        const rawRows = XLSX.utils.sheet_to_json(ws, { header: 1 });
 
-        if (data.length < 2) {
+        if (rawRows.length < 1) {
           showToast("Excel file is empty", "err");
           return;
         }
 
-        const headers = data[0].map(h => h ? String(h).trim().toLowerCase() : "");
-        const nameIdx = headers.findIndex(h => h && (h.includes("name") || h.includes("title") || h.includes("product") || h.includes("item")));
-        const qtyIdx = headers.findIndex(h => h && (h.includes("qty") || h.includes("quantity") || h.includes("stock")));
-        const unitIdx = headers.findIndex(h => h && h.includes("unit"));
-        const costIdx = headers.findIndex(h => h && (h.includes("cost") || h.includes("price") || h.includes("buying") || h.includes("purchase")));
-        const saleIdx = headers.findIndex(h => h && (h.includes("sale") || h.includes("selling") || h.includes("retail") || h.includes("price")));
-        const categoryIdx = headers.findIndex(h => h && (h.includes("category") || h.includes("type")));
-        const lowStockIdx = headers.findIndex(h => h && (h.includes("low") || h.includes("alert") || h.includes("min")));
-
-        const colMap = {
-          name: nameIdx !== -1 ? nameIdx : 1,
-          quantity: qtyIdx !== -1 ? qtyIdx : 2,
-          unit: unitIdx !== -1 ? unitIdx : 3,
-          costPrice: costIdx !== -1 ? costIdx : 4,
-          salePrice: saleIdx !== -1 ? saleIdx : 5,
-          category: categoryIdx !== -1 ? categoryIdx : -1,
-          lowStock: lowStockIdx !== -1 ? lowStockIdx : -1,
-        };
-
-        const importedProducts = [];
-        let skippedRows = 0;
-
-        for (let i = 1; i < data.length; i++) {
-          const row = data[i];
-          if (!row || row.length === 0) continue;
-
-          const name = row[colMap.name] ? String(row[colMap.name]).trim() : null;
-          if (!name || name === "0" || name.startsWith("==") || name === "") {
-            skippedRows++;
-            continue;
-          }
-
-          let costPrice = 0;
-          if (row[colMap.costPrice] !== undefined && row[colMap.costPrice] !== null) {
-            costPrice = Number(row[colMap.costPrice]) || 0;
-          }
-
-          let salePrice = 0;
-          if (row[colMap.salePrice] !== undefined && row[colMap.salePrice] !== null) {
-            salePrice = Number(row[colMap.salePrice]) || 0;
-          }
-          let markup = 40;
-          if (costPrice > 0 && salePrice > 0) {
-            markup = roundNum(((salePrice - costPrice) / costPrice) * 100, 1);
-            if (markup < 0 || markup > 1000) markup = 40;
-          }
-
-          let quantity = 0;
-          if (row[colMap.quantity] !== undefined && row[colMap.quantity] !== null) {
-            quantity = Number(row[colMap.quantity]) || 0;
-          }
-
-          let category = "General";
-          if (colMap.category !== -1 && row[colMap.category]) {
-            category = String(row[colMap.category]).trim();
-          } else {
-            category = categorizeProductName(name);
-          }
-
-          let unit = "piece";
-          if (row[colMap.unit]) {
-            unit = String(row[colMap.unit]).trim().toLowerCase();
-            if (unit === "" || unit === "none") unit = "piece";
-          }
-
-          let lowStock = 5;
-          if (colMap.lowStock !== -1 && row[colMap.lowStock] !== undefined && row[colMap.lowStock] !== null) {
-            lowStock = parseInt(row[colMap.lowStock]) || 5;
-          }
-
-          importedProducts.push({
-            id: `p_imp_${Math.random().toString(36).slice(2, 10)}`,
-            name,
-            category,
-            unit,
-            quantity,
-            costPrice,
-            markup,
-            lowStock,
-          });
-        }
-
-        if (importedProducts.length === 0) {
-          showToast("No valid products found to import", "err");
+        const cleanedRows = rawRows.filter(row => row && row.some(cell => cell !== null && cell !== ''));
+        if (cleanedRows.length === 0) {
+          showToast("Excel file contains no data", "err");
           return;
         }
 
-        const next = [...products];
-        let idCounter = next.length + 1;
+        setExcelData(cleanedRows);
+
+        const firstRow = cleanedRows[0] || [];
+        const columnsCount = Math.max(...cleanedRows.slice(0, 5).map(r => r.length), firstRow.length);
+        const getColumnLetter = (colIdx) => {
+          let letter = "";
+          let temp = colIdx;
+          while (temp >= 0) {
+            letter = String.fromCharCode((temp % 26) + 65) + letter;
+            temp = Math.floor(temp / 26) - 1;
+          }
+          return letter;
+        };
+
+        const detectedHeaders = firstRow.map((cell, idx) => {
+          if (cell !== null && cell !== undefined && String(cell).trim() !== '') {
+            return String(cell).trim();
+          }
+          return `Column ${getColumnLetter(idx)}`;
+        });
+
+        while (detectedHeaders.length < columnsCount) {
+          detectedHeaders.push(`Column ${getColumnLetter(detectedHeaders.length)}`);
+        }
+
+        setExcelHeaders(detectedHeaders);
+
+        const lowerHeaders = detectedHeaders.map(h => h.toLowerCase());
+        const nameIdx = lowerHeaders.findIndex(h => h.includes("name") || h.includes("title") || h.includes("product") || h.includes("item") || h.includes("desc"));
+        const qtyIdx = lowerHeaders.findIndex(h => h.includes("qty") || h.includes("quantity") || h.includes("stock") || h.includes("count") || h.includes("avail"));
+        const unitIdx = lowerHeaders.findIndex(h => h.includes("unit") || h.includes("pack") || h.includes("measure"));
         
-        const finalImported = importedProducts.map(p => {
-          const existing = next.find(x => x.name.toLowerCase() === p.name.toLowerCase());
-          if (existing) {
-            return {
-              ...existing,
-              quantity: existing.quantity + p.quantity,
-              costPrice: p.costPrice > 0 ? p.costPrice : existing.costPrice,
-              markup: p.markup !== 40 ? p.markup : existing.markup,
-            };
-          } else {
-            const newId = `p${String(idCounter++).padStart(4, "0")}`;
-            return {
-              ...p,
-              id: newId,
-            };
-          }
+        let costIdx = lowerHeaders.findIndex(h => h.includes("cost") || h.includes("buying") || h.includes("purchase") || h.includes("buy") || h.includes("cp"));
+        let saleIdx = lowerHeaders.findIndex(h => h.includes("sale") || h.includes("selling") || h.includes("retail") || h.includes("sp"));
+
+        if (costIdx === -1 && saleIdx === -1) {
+          const priceIdx = lowerHeaders.findIndex(h => h === "price" || h.includes("price"));
+          costIdx = priceIdx;
+        } else if (costIdx === -1) {
+          costIdx = lowerHeaders.findIndex(h => h.includes("price") && h !== (detectedHeaders[saleIdx] ? detectedHeaders[saleIdx].toLowerCase() : ""));
+        } else if (saleIdx === -1) {
+          saleIdx = lowerHeaders.findIndex(h => h.includes("price") && h !== (detectedHeaders[costIdx] ? detectedHeaders[costIdx].toLowerCase() : ""));
+        }
+
+        const categoryIdx = lowerHeaders.findIndex(h => h.includes("category") || h.includes("type") || h.includes("dept") || h.includes("group"));
+        const lowStockIdx = lowerHeaders.findIndex(h => h.includes("low") || h.includes("alert") || h.includes("min") || h.includes("warn"));
+
+        setExcelMappings({
+          name: nameIdx,
+          quantity: qtyIdx,
+          unit: unitIdx,
+          costPrice: costIdx,
+          salePrice: saleIdx,
+          category: categoryIdx,
+          lowStock: lowStockIdx
         });
 
-        const mergedProducts = [...products];
-        finalImported.forEach(imp => {
-          const idx = mergedProducts.findIndex(x => x.id === imp.id);
-          if (idx !== -1) {
-            mergedProducts[idx] = imp;
-          } else {
-            mergedProducts.push(imp);
-          }
-        });
-
-        await persistProducts(mergedProducts);
-        showToast(`Imported/updated ${finalImported.length} products!`);
+        setHasHeaderRow(true);
+        setShowExcelMapper(true);
       } catch (err) {
         console.error("Error reading excel:", err);
         showToast("Failed to parse Excel file", "err");
       }
     };
     reader.readAsBinaryString(file);
+    e.target.value = "";
+  };
+
+  const handleFinalExcelImport = async () => {
+    try {
+      const startIdx = hasHeaderRow ? 1 : 0;
+      const importedProducts = [];
+
+      if (excelMappings.name === -1) {
+        showToast("Product Name column mapping is required", "err");
+        return;
+      }
+
+      for (let i = startIdx; i < excelData.length; i++) {
+        const row = excelData[i];
+        if (!row || row.length === 0) continue;
+
+        const name = excelMappings.name !== -1 && row[excelMappings.name] 
+          ? String(row[excelMappings.name]).trim() 
+          : null;
+
+        if (!name || name === "0" || name.startsWith("==") || name === "") {
+          continue;
+        }
+
+        let costPrice = 0;
+        if (excelMappings.costPrice !== -1 && row[excelMappings.costPrice] !== undefined && row[excelMappings.costPrice] !== null) {
+          costPrice = Number(row[excelMappings.costPrice]) || 0;
+        }
+
+        let salePrice = 0;
+        if (excelMappings.salePrice !== -1 && row[excelMappings.salePrice] !== undefined && row[excelMappings.salePrice] !== null) {
+          salePrice = Number(row[excelMappings.salePrice]) || 0;
+        }
+
+        let markup = 40;
+        if (costPrice > 0 && salePrice > 0) {
+          markup = roundNum(((salePrice - costPrice) / costPrice) * 100, 1);
+          if (markup < 0 || markup > 1000) markup = 40;
+        }
+
+        let quantity = 0;
+        if (excelMappings.quantity !== -1 && row[excelMappings.quantity] !== undefined && row[excelMappings.quantity] !== null) {
+          quantity = Number(row[excelMappings.quantity]) || 0;
+        }
+
+        let category = "General";
+        if (excelMappings.category !== -1 && row[excelMappings.category]) {
+          category = String(row[excelMappings.category]).trim();
+        } else {
+          category = categorizeProductName(name);
+        }
+
+        let unit = "piece";
+        if (excelMappings.unit !== -1 && row[excelMappings.unit]) {
+          unit = String(row[excelMappings.unit]).trim().toLowerCase();
+          if (unit === "" || unit === "none") unit = "piece";
+        }
+
+        let lowStock = 5;
+        if (excelMappings.lowStock !== -1 && row[excelMappings.lowStock] !== undefined && row[excelMappings.lowStock] !== null) {
+          lowStock = parseInt(row[excelMappings.lowStock]) || 5;
+        }
+
+        importedProducts.push({
+          id: `p_imp_${Math.random().toString(36).slice(2, 10)}`,
+          name,
+          category,
+          unit,
+          quantity,
+          costPrice,
+          markup,
+          lowStock,
+        });
+      }
+
+      if (importedProducts.length === 0) {
+        showToast("No valid products found to import", "err");
+        return;
+      }
+
+      const next = [...products];
+      let idCounter = next.length + 1;
+      
+      const finalImported = importedProducts.map(p => {
+        const existing = next.find(x => x.name.toLowerCase() === p.name.toLowerCase());
+        if (existing) {
+          return {
+            ...existing,
+            quantity: existing.quantity + p.quantity,
+            costPrice: p.costPrice > 0 ? p.costPrice : existing.costPrice,
+            markup: p.costPrice > 0 && p.salePrice > 0 ? p.markup : existing.markup,
+          };
+        } else {
+          const newId = `p${String(idCounter++).padStart(4, "0")}`;
+          return {
+            ...p,
+            id: newId,
+          };
+        }
+      });
+
+      const mergedProducts = [...products];
+      finalImported.forEach(imp => {
+        const idx = mergedProducts.findIndex(x => x.id === imp.id);
+        if (idx !== -1) {
+          mergedProducts[idx] = imp;
+        } else {
+          mergedProducts.push(imp);
+        }
+      });
+
+      await persistProducts(mergedProducts);
+      showToast(`Imported/updated ${finalImported.length} products successfully!`);
+      setShowExcelMapper(false);
+    } catch (err) {
+      console.error("Error finalizing Excel import:", err);
+      showToast("Failed to finalize import", "err");
+    }
   };
 
   const filtered = products.filter(p =>
@@ -2576,9 +2669,376 @@ function Inventory({ products, settings, persistProducts, showToast }) {
           onSave={handleBulkSave}
         />
       )}
+
+      {/* Excel Column Mapper Modal */}
+      {showExcelMapper && (
+        <div style={modalStyles.overlay}>
+          <div style={modalStyles.modalCard}>
+            <div style={modalStyles.header}>
+              <h2 style={modalStyles.title}>⚙️ Map Excel Columns</h2>
+              <p style={modalStyles.subtitle}>Align your spreadsheet columns with the store inventory details.</p>
+            </div>
+
+            {/* Has Header Checkbox */}
+            <div style={modalStyles.checkboxWrapper}>
+              <label style={modalStyles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={hasHeaderRow}
+                  onChange={(e) => setHasHeaderRow(e.target.checked)}
+                  style={modalStyles.checkbox}
+                />
+                First row contains column headers (e.g. "Name", "Cost", "Stock")
+              </label>
+            </div>
+
+            {/* Data Preview */}
+            <div style={modalStyles.previewSection}>
+              <div style={modalStyles.sectionTitle}>Data Preview (First few rows)</div>
+              <div style={modalStyles.previewTableScroll}>
+                <table style={modalStyles.table}>
+                  <thead>
+                    <tr>
+                      {displayHeaders.map((h, idx) => (
+                        <th key={idx} style={modalStyles.th}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {excelData.slice(hasHeaderRow ? 1 : 0, hasHeaderRow ? 4 : 3).map((row, rIdx) => (
+                      <tr key={rIdx} style={modalStyles.tr}>
+                        {displayHeaders.map((_, cIdx) => (
+                          <td key={cIdx} style={modalStyles.td}>
+                            {row[cIdx] !== undefined ? String(row[cIdx]).slice(0, 30) : ""}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Mappings Form */}
+            <div style={modalStyles.formSection}>
+              <div style={modalStyles.sectionTitle}>Select Matching Columns</div>
+              <div style={modalStyles.grid}>
+                
+                {/* Required: Name */}
+                <div style={modalStyles.field}>
+                  <label style={modalStyles.label}>Product Name <span style={{color: '#ea580c'}}>*</span></label>
+                  <select
+                    value={excelMappings.name}
+                    onChange={(e) => setExcelMappings(prev => ({ ...prev, name: parseInt(e.target.value) }))}
+                    style={modalStyles.select}
+                  >
+                    <option value={-1}>-- Select Column --</option>
+                    {displayHeaders.map((h, idx) => (
+                      <option key={idx} value={idx}>{h}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Required: Cost Price */}
+                <div style={modalStyles.field}>
+                  <label style={modalStyles.label}>Cost Price <span style={{color: '#ea580c'}}>*</span></label>
+                  <select
+                    value={excelMappings.costPrice}
+                    onChange={(e) => setExcelMappings(prev => ({ ...prev, costPrice: parseInt(e.target.value) }))}
+                    style={modalStyles.select}
+                  >
+                    <option value={-1}>-- Select Column --</option>
+                    {displayHeaders.map((h, idx) => (
+                      <option key={idx} value={idx}>{h}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Optional: Sale Price */}
+                <div style={modalStyles.field}>
+                  <label style={modalStyles.label}>Sale Price (Optional - calculates markup)</label>
+                  <select
+                    value={excelMappings.salePrice}
+                    onChange={(e) => setExcelMappings(prev => ({ ...prev, salePrice: parseInt(e.target.value) }))}
+                    style={modalStyles.select}
+                  >
+                    <option value={-1}>-- None (Use 40% markup) --</option>
+                    {displayHeaders.map((h, idx) => (
+                      <option key={idx} value={idx}>{h}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Optional: Quantity */}
+                <div style={modalStyles.field}>
+                  <label style={modalStyles.label}>Quantity / Stock (Optional)</label>
+                  <select
+                    value={excelMappings.quantity}
+                    onChange={(e) => setExcelMappings(prev => ({ ...prev, quantity: parseInt(e.target.value) }))}
+                    style={modalStyles.select}
+                  >
+                    <option value={-1}>-- None (Defaults to 0) --</option>
+                    {displayHeaders.map((h, idx) => (
+                      <option key={idx} value={idx}>{h}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Optional: Category */}
+                <div style={modalStyles.field}>
+                  <label style={modalStyles.label}>Category (Optional)</label>
+                  <select
+                    value={excelMappings.category}
+                    onChange={(e) => setExcelMappings(prev => ({ ...prev, category: parseInt(e.target.value) }))}
+                    style={modalStyles.select}
+                  >
+                    <option value={-1}>-- Auto-Categorize by Name --</option>
+                    {displayHeaders.map((h, idx) => (
+                      <option key={idx} value={idx}>{h}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Optional: Unit */}
+                <div style={modalStyles.field}>
+                  <label style={modalStyles.label}>Unit (Optional)</label>
+                  <select
+                    value={excelMappings.unit}
+                    onChange={(e) => setExcelMappings(prev => ({ ...prev, unit: parseInt(e.target.value) }))}
+                    style={modalStyles.select}
+                  >
+                    <option value={-1}>-- None (Defaults to "piece") --</option>
+                    {displayHeaders.map((h, idx) => (
+                      <option key={idx} value={idx}>{h}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Optional: Low Stock Limit */}
+                <div style={modalStyles.field}>
+                  <label style={modalStyles.label}>Low Stock Limit (Optional)</label>
+                  <select
+                    value={excelMappings.lowStock}
+                    onChange={(e) => setExcelMappings(prev => ({ ...prev, lowStock: parseInt(e.target.value) }))}
+                    style={modalStyles.select}
+                  >
+                    <option value={-1}>-- None (Defaults to 5) --</option>
+                    {displayHeaders.map((h, idx) => (
+                      <option key={idx} value={idx}>{h}</option>
+                    ))}
+                  </select>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div style={modalStyles.actions}>
+              <button
+                type="button"
+                onClick={() => setShowExcelMapper(false)}
+                style={modalStyles.btnCancel}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleFinalExcelImport}
+                disabled={excelMappings.name === -1 || excelMappings.costPrice === -1}
+                style={excelMappings.name === -1 || excelMappings.costPrice === -1 ? modalStyles.btnImportDisabled : modalStyles.btnImport}
+              >
+                Import Products
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+const modalStyles = {
+  overlay: {
+    position: 'fixed',
+    top: 0, left: 0, right: 0, bottom: 0,
+    background: 'rgba(38, 36, 32, 0.75)',
+    backdropFilter: 'blur(4px)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 9999,
+    padding: '20px',
+    boxSizing: 'border-box'
+  },
+  modalCard: {
+    background: '#FFFFFF',
+    border: '1px solid #E0D9C9',
+    borderRadius: '16px',
+    width: '100%',
+    maxWidth: '800px',
+    padding: '28px',
+    boxShadow: '0 10px 40px rgba(38, 36, 32, 0.15)',
+    fontFamily: "'Inter', sans-serif",
+    color: '#262420',
+    maxHeight: '90vh',
+    display: 'flex',
+    flexDirection: 'column',
+    overflowY: 'auto',
+    boxSizing: 'border-box'
+  },
+  header: {
+    marginBottom: '20px',
+    borderBottom: '1px solid #E5DFD3',
+    paddingBottom: '12px'
+  },
+  title: {
+    fontSize: '22px',
+    fontWeight: '700',
+    margin: 0,
+    color: '#262420',
+  },
+  subtitle: {
+    fontSize: '13px',
+    color: '#746C5E',
+    marginTop: '4px',
+    marginRight: 0, marginBottom: 0, marginLeft: 0
+  },
+  checkboxWrapper: {
+    marginBottom: '16px',
+  },
+  checkboxLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    fontSize: '13.5px',
+    fontWeight: '500',
+    color: '#262420',
+    cursor: 'pointer'
+  },
+  checkbox: {
+    accentColor: '#D9720B',
+    width: '16px',
+    height: '16px',
+    cursor: 'pointer'
+  },
+  previewSection: {
+    marginBottom: '24px',
+    background: '#FAF9F6',
+    border: '1px solid #E5DFD3',
+    borderRadius: '8px',
+    padding: '14px'
+  },
+  sectionTitle: {
+    fontSize: '13px',
+    fontWeight: '700',
+    color: '#746C5E',
+    letterSpacing: '0.5px',
+    textTransform: 'uppercase',
+    marginBottom: '10px'
+  },
+  previewTableScroll: {
+    overflowX: 'auto',
+    maxHeight: '130px',
+    overflowY: 'auto',
+    border: '1px solid #EAE5D9',
+    borderRadius: '6px'
+  },
+  table: {
+    width: '100%',
+    borderCollapse: 'collapse',
+    fontSize: '12px',
+    textAlign: 'left'
+  },
+  th: {
+    background: '#F0EBE0',
+    color: '#524B40',
+    padding: '8px 12px',
+    fontWeight: '600',
+    borderBottom: '1px solid #EAE5D9',
+    whiteSpace: 'nowrap'
+  },
+  tr: {
+    borderBottom: '1px solid #F3EFE6'
+  },
+  td: {
+    padding: '8px 12px',
+    color: '#524B40',
+    whiteSpace: 'nowrap',
+    background: '#FFFFFF'
+  },
+  formSection: {
+    marginBottom: '24px'
+  },
+  grid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+    gap: '16px'
+  },
+  field: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px'
+  },
+  label: {
+    fontSize: '12px',
+    fontWeight: '600',
+    color: '#746C5E'
+  },
+  select: {
+    padding: '8px 10px',
+    border: '1px solid #E0D9C9',
+    borderRadius: '6px',
+    fontSize: '13px',
+    background: '#F6F3EC',
+    outline: 'none',
+    color: '#262420',
+    cursor: 'pointer',
+    width: '100%'
+  },
+  actions: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    gap: '12px',
+    borderTop: '1px solid #E5DFD3',
+    paddingTop: '20px',
+    marginTop: 'auto'
+  },
+  btnCancel: {
+    padding: '9px 18px',
+    border: '1px solid #E0D9C9',
+    borderRadius: '8px',
+    background: 'transparent',
+    color: '#746C5E',
+    fontWeight: '600',
+    fontSize: '13.5px',
+    cursor: 'pointer',
+    fontFamily: "'Inter', sans-serif",
+    transition: 'background-color 0.2s'
+  },
+  btnImport: {
+    padding: '9px 22px',
+    border: 'none',
+    borderRadius: '8px',
+    background: '#D9720B',
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: '13.5px',
+    cursor: 'pointer',
+    fontFamily: "'Inter', sans-serif",
+    transition: 'background-color 0.2s'
+  },
+  btnImportDisabled: {
+    padding: '9px 22px',
+    border: 'none',
+    borderRadius: '8px',
+    background: '#EAE5D9',
+    color: '#A89F90',
+    fontWeight: '600',
+    fontSize: '13.5px',
+    cursor: 'not-allowed',
+    fontFamily: "'Inter', sans-serif"
+  }
+};
 
 function ProductModal({ product, defaultLowStock, onClose, onSave, onDelete }) {
   const [form, setForm] = useState(product || { id: uid(), name: "", category: "", unit: "piece", quantity: 0, costPrice: 0, markup: 0, lowStock: defaultLowStock });
