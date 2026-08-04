@@ -10,18 +10,18 @@ The application utilizes Electron's secure architecture with isolated context en
 
 ```mermaid
 flowchart TD
-    subgraph Desktop App Client (Local)
-        Renderer[React Renderer Process<br/><i>Vite & UI Components</i>]
-        Preload[Preload Script<br/><i>Context Bridge & IPC Renderer</i>]
-        Main[Electron Main Process<br/><i>Node.js Environment</i>]
+    subgraph "Desktop App Client (Local)"
+        Renderer["React Renderer Process<br/>Vite & UI Components"]
+        Preload["Preload Script<br/>Context Bridge & IPC Renderer"]
+        Main["Electron Main Process<br/>Node.js Environment"]
         
         Renderer <--> |IPC Calls & Invokes| Preload
         Preload <--> |IPC Main Handlers| Main
     end
     
-    subgraph Cloud Infrastructure
-        DB[(Cloud PostgreSQL<br/><i>Neon.tech</i>)]
-        SMTP[Google SMTP Server<br/><i>Nodemailer / Gmail API</i>]
+    subgraph "Cloud Infrastructure"
+        DB[("Cloud PostgreSQL<br/>Neon.tech")]
+        SMTP["Google SMTP Server<br/>Nodemailer / Gmail API"]
         
         Main --> |Secure Connection Pool| DB
         Main --> |SMTP Welcome Emails| SMTP
