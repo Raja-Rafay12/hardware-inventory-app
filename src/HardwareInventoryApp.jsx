@@ -1927,6 +1927,27 @@ export default function HardwareInventoryApp({ user, onLogout }) {
   const [lastInvoice, setLastInvoice] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
+  const [quotationCart, setQuotationCart] = useState([]);
+  const [quotationCustName, setQuotationCustName] = useState("");
+  const [quotationCustEmail, setQuotationCustEmail] = useState("");
+  const [quotationDiscount, setQuotationDiscount] = useState(0);
+  const [quotations, setQuotations] = useState(() => {
+    try {
+      const saved = localStorage.getItem("hw_quotations");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("hw_quotations", JSON.stringify(quotations));
+    } catch (err) {
+      console.error("Save quotations to local storage failed:", err);
+    }
+  }, [quotations]);
+
   const showToast = useCallback((msg, kind = "ok") => {
     setToast({ msg, kind });
     setTimeout(() => setToast(null), 2600);
@@ -2047,6 +2068,7 @@ export default function HardwareInventoryApp({ user, onLogout }) {
           <NavBtn icon={<Package size={17} />} label="Inventory" active={view === "inventory"} onClick={() => setView("inventory")} badge={lowStockItems.length || null} />
           <NavBtn icon={<ShoppingCart size={17} />} label="New Invoice" active={view === "newInvoice"} onClick={() => setView("newInvoice")} />
           <NavBtn icon={<FileClock size={17} />} label="Invoice History" active={view === "invoices"} onClick={() => setView("invoices")} />
+          <NavBtn icon={<Receipt size={17} />} label="Quotation" active={view === "quotation"} onClick={() => setView("quotation")} />
           <NavBtn icon={<Wallet size={17} />} label="Daily Ledger" active={view === "ledger"} onClick={() => setView("ledger")} />
         </nav>
         <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10 }}>
@@ -2088,6 +2110,25 @@ export default function HardwareInventoryApp({ user, onLogout }) {
         )}
         {view === "ledger" && (
           <DailyLedger invoices={invoices} expenses={expenses} settings={settings} persistExpenses={persistExpenses} showToast={showToast} products={products} />
+        )}
+        {view === "quotation" && (
+          <QuotationView
+            products={products} settings={settings}
+            cart={quotationCart} setCart={setQuotationCart}
+            customerName={quotationCustName} setCustomerName={setQuotationCustName}
+            customerEmail={quotationCustEmail} setCustomerEmail={setQuotationCustEmail}
+            discount={quotationDiscount} setDiscount={setQuotationDiscount}
+            quotations={quotations} setQuotations={setQuotations}
+            showToast={showToast} setView={setView}
+            onConvertToInvoice={(items, custName, custEmail, disc) => {
+              setCart(items.map(i => ({ productId: i.productId, name: i.name, unit: i.unit, qty: i.qty, costPrice: i.costPrice, markup: i.markup, maxStock: products.find(p => p.id === i.productId)?.quantity || 9999 })));
+              setCustomerName(custName);
+              setCustomerEmail(custEmail);
+              setDiscount(disc);
+              setView("newInvoice");
+              showToast("Quotation loaded into Invoice Cart!");
+            }}
+          />
         )}
       </main>
 
@@ -3331,6 +3372,280 @@ function NewInvoice({ products, settings, cart, setCart, customerName, setCustom
       {preview && (
         <InvoicePreviewModal invoice={preview} settings={settings} onClose={() => setPreview(null)} />
       )}
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------
+   QUOTATIONS & ESTIMATES VIEW
+--------------------------------------------------------- */
+function QuotationView({ products, settings, cart, setCart, customerName, setCustomerName, customerEmail, setCustomerEmail, discount, setDiscount, quotations, setQuotations, showToast, setView, onConvertToInvoice }) {
+  const [subView, setSubView] = useState("new"); // "new" | "history"
+  const [search, setSearch] = useState("");
+  const [preview, setPreview] = useState(null);
+  const [query, setQuery] = useState("");
+  const cs = settings.currencySymbol;
+
+  const matches = search.trim() ? products.filter(p => p.name.toLowerCase().includes(search.toLowerCase())).slice(0, 6) : [];
+
+  const addToCart = (product) => {
+    setSearch("");
+    setCart(c => {
+      const existing = c.find(i => i.productId === product.id);
+      if (existing) {
+        return c.map(i => i.productId === product.id ? { ...i, qty: i.qty + 1 } : i);
+      }
+      return [...c, { productId: product.id, name: product.name, unit: product.unit, qty: 1, costPrice: product.costPrice, markup: product.markup }];
+    });
+  };
+
+  const updateItem = (productId, patch) => {
+    setCart(c => c.map(i => i.productId === productId ? { ...i, ...patch } : i));
+  };
+  const removeItem = (productId) => setCart(c => c.filter(i => i.productId !== productId));
+
+  const cartWithPrice = cart.map(i => ({ ...i, sellPrice: sellPrice({ costPrice: i.costPrice, markup: i.markup }), lineTotal: i.qty * sellPrice({ costPrice: i.costPrice, markup: i.markup }) }));
+  const subtotal = cartWithPrice.reduce((s, i) => s + i.lineTotal, 0);
+  const totalCost = cartWithPrice.reduce((s, i) => s + i.qty * i.costPrice, 0);
+  const discountAmt = discount > 0 ? (discount <= 100 ? subtotal * (discount / 100) : discount) : 0;
+  const total = Math.max(0, subtotal - discountAmt);
+  const profit = total - totalCost;
+
+  const saveQuotation = () => {
+    if (cart.length === 0) return;
+    const quotationNumber = `QT-${String(quotations.length + 1).padStart(4, "0")}`;
+    const quote = {
+      id: uid(),
+      quotationNumber,
+      customerName: customerName.trim() || "Walk-in Customer",
+      customerEmail: customerEmail.trim(),
+      date: new Date().toISOString(),
+      items: cartWithPrice.map(i => ({ productId: i.productId, name: i.name, unit: i.unit, qty: i.qty, costPrice: i.costPrice, markup: i.markup, price: i.sellPrice, lineTotal: i.lineTotal })),
+      subtotal, discount: discountAmt, total, totalCost, profit,
+    };
+    setQuotations([quote, ...quotations]);
+    
+    setCart([]);
+    setCustomerName("");
+    setCustomerEmail("");
+    setDiscount(0);
+    setPreview(quote);
+    showToast(`${quotationNumber} saved locally!`);
+  };
+
+  const deleteQuotation = (id) => {
+    setQuotations(q => q.filter(x => x.id !== id));
+    showToast("Quotation deleted");
+  };
+
+  const filteredQuotes = quotations.filter(q =>
+    q.quotationNumber.toLowerCase().includes(query.toLowerCase()) ||
+    (q.customerName || "").toLowerCase().includes(query.toLowerCase())
+  );
+
+  return (
+    <div className="hw-view">
+      <ViewHeader
+        eyebrow="Estimates Manager"
+        title="Quotations"
+        right={
+          <div style={{ display: "flex", border: "1px solid var(--border)", borderRadius: "6px", overflow: "hidden" }}>
+            <button className={`hw-btn-ghost ${subView === "new" ? "active" : ""}`} onClick={() => setSubView("new")} style={{ border: "none", borderRadius: 0, padding: "8px 16px", background: subView === "new" ? "var(--border)" : "transparent" }}>
+              New Quote
+            </button>
+            <button className={`hw-btn-ghost ${subView === "history" ? "active" : ""}`} onClick={() => setSubView("history")} style={{ border: "none", borderRadius: 0, padding: "8px 16px", background: subView === "history" ? "var(--border)" : "transparent" }}>
+              Quote History ({quotations.length})
+            </button>
+          </div>
+        }
+      />
+
+      {subView === "new" ? (
+        <div className="hw-invoice-layout">
+          <div className="hw-card">
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <div style={{ flex: 1 }}>
+                <Field label="Customer name (optional)">
+                  <input value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Walk-in customer" />
+                </Field>
+              </div>
+              <div style={{ flex: 1 }}>
+                <Field label="Customer email (optional)">
+                  <input type="email" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} placeholder="customer@email.com" />
+                </Field>
+              </div>
+            </div>
+
+            <div className="hw-search-row" style={{ marginTop: 14, position: "relative" }}>
+              <Search size={16} />
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products to add to quotation…" />
+              {matches.length > 0 && (
+                <div className="hw-autocomplete">
+                  {matches.map(p => (
+                    <button key={p.id} onClick={() => addToCart(p)}>
+                      <span>{p.name}</span>
+                      <span className="hw-mono hw-muted">{cs}{fmtNum(sellPrice(p))} · {p.quantity} {p.unit} in stock</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="hw-table-wrap" style={{ marginTop: 14 }}>
+              <table className="hw-table hw-table-tight">
+                <thead>
+                  <tr><th>Item</th><th>Qty</th><th>Cost</th><th>Markup</th><th>Sell price</th><th>Total</th><th></th></tr>
+                </thead>
+                <tbody>
+                  {cartWithPrice.map(i => (
+                    <tr key={i.productId}>
+                      <td>{i.name}<div className="hw-il-meta">{i.unit}</div></td>
+                      <td>
+                        <NumInput className="hw-mini-input" min={0} value={i.qty} onChange={n => updateItem(i.productId, { qty: Math.max(0, n) })} />
+                      </td>
+                      <td>
+                        <NumInput className="hw-mini-input" step="0.01" min={0} value={i.costPrice} onChange={n => updateItem(i.productId, { costPrice: Math.max(0, n) })} />
+                      </td>
+                      <td>
+                        <NumInput className="hw-mini-input" step="0.1" min={0} value={i.markup} onChange={n => updateItem(i.productId, { markup: Math.max(0, n) })} style={{ width: 54 }} />%
+                      </td>
+                      <td>
+                        <NumInput className="hw-mini-input" step="0.01" min={0} value={fmtNum(i.sellPrice)} onChange={n => {
+                          const newSell = Math.max(0, n);
+                          const cost = Number(i.costPrice) || 0;
+                          const newMarkup = cost > 0 ? ((newSell - cost) / cost) * 100 : 0;
+                          updateItem(i.productId, { markup: newMarkup });
+                        }} />
+                      </td>
+                      <td className="hw-mono">{cs}{fmtNum(i.lineTotal)}</td>
+                      <td><button className="hw-icon-btn" onClick={() => removeItem(i.productId)}><X size={14} /></button></td>
+                    </tr>
+                  ))}
+                  {cart.length === 0 && <tr><td colSpan={7}><EmptyRow text="Search above to add items to this quotation estimate." /></td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="hw-card hw-summary-card">
+            <h3>Quote Summary</h3>
+            <div className="hw-summary-row"><span>Subtotal</span><span className="hw-mono">{cs}{fmtNum(subtotal)}</span></div>
+            <div className="hw-summary-row">
+              <span>Discount</span>
+              <NumInput className="hw-mini-input" min={0} value={discount} onChange={n => setDiscount(Math.max(0, n))} style={{ width: 70 }} />
+            </div>
+            <div className="hw-hint" style={{ marginTop: -8, marginBottom: 8 }}>0–100 = percent, above 100 = flat amount off</div>
+            <div className="hw-summary-row hw-summary-total"><span>Total</span><span className="hw-mono">{cs}{fmtNum(total)}</span></div>
+            <button className="hw-btn-accent hw-btn-block" disabled={cart.length === 0} onClick={saveQuotation}>
+              <Save size={15} /> Save &amp; Preview Quote
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="hw-card" style={{ marginTop: 14 }}>
+          <div className="hw-search-row" style={{ marginBottom: 14 }}>
+            <Search size={16} />
+            <input placeholder="Search past quotations by number or customer name…" value={query} onChange={e => setQuery(e.target.value)} />
+          </div>
+          <div className="hw-table-wrap">
+            <table className="hw-table">
+              <thead>
+                <tr>
+                  <th>Quote Number</th>
+                  <th>Customer</th>
+                  <th>Date</th>
+                  <th>Items</th>
+                  <th>Total</th>
+                  <th style={{ textAlign: "right" }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredQuotes.map(q => (
+                  <tr key={q.id}>
+                    <td className="hw-mono" style={{ fontWeight: 600 }}>{q.quotationNumber}</td>
+                    <td>{q.customerName}</td>
+                    <td className="hw-muted">{fmtDate(q.date)}</td>
+                    <td className="hw-muted">{q.items.reduce((sum, item) => sum + item.qty, 0)} items</td>
+                    <td className="hw-mono">{cs}{fmtNum(q.total)}</td>
+                    <td style={{ textAlign: "right" }}>
+                      <div style={{ display: "inline-flex", gap: "8px" }}>
+                        <button className="hw-btn-ghost" style={{ padding: "6px 10px", fontSize: "12px" }} onClick={() => setPreview(q)}>
+                          View/Print
+                        </button>
+                        <button className="hw-btn-accent" style={{ padding: "6px 10px", fontSize: "12px" }} onClick={() => onConvertToInvoice(q.items, q.customerName, q.customerEmail, q.discount)}>
+                          Convert to Invoice
+                        </button>
+                        <button className="hw-icon-btn" onClick={() => deleteQuotation(q.id)} style={{ color: "var(--danger)" }}>
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {filteredQuotes.length === 0 && (
+                  <tr><td colSpan={6}><EmptyRow text={query ? "No quotations found." : "No quotations saved yet."} /></td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {preview && (
+        <QuotationPreviewModal quote={preview} settings={settings} onClose={() => setPreview(null)} />
+      )}
+    </div>
+  );
+}
+
+function QuotationPreviewModal({ quote, settings, onClose }) {
+  const cs = settings.currencySymbol;
+  return (
+    <div className="hw-modal-overlay" onClick={onClose}>
+      <div className="hw-modal hw-receipt-modal" onClick={e => e.stopPropagation()}>
+        <div className="hw-receipt" id="hw-print-area">
+          <div className="hw-receipt-head">
+            <div className="hw-brand-mark small">⛏</div>
+            <div className="hw-receipt-shop">{settings.shopName}</div>
+            <div style={{ fontSize: "11px", fontWeight: "700", textTransform: "uppercase", background: "var(--border)", padding: "2px 8px", borderRadius: "4px", color: "var(--ink)", letterSpacing: "1px", marginTop: "4px" }}>
+              QUOTATION ESTIMATE
+            </div>
+            <div className="hw-receipt-inv" style={{ marginTop: "6px" }}>{quote.quotationNumber}</div>
+          </div>
+          <div className="hw-receipt-meta">
+            <span>{quote.customerName || "Walk-in customer"}</span>
+            <span>{fmtDateTime(quote.date)}</span>
+          </div>
+          <div className="hw-receipt-divider" />
+          <table className="hw-receipt-table">
+            <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Amount</th></tr></thead>
+            <tbody>
+              {quote.items.map((i, idx) => (
+                <tr key={idx}>
+                  <td>{i.name}<span className="hw-il-meta"> ({i.unit})</span></td>
+                  <td className="hw-mono">{i.qty}</td>
+                  <td className="hw-mono">{cs}{fmtNum(i.price)}</td>
+                  <td className="hw-mono">{cs}{fmtNum(i.lineTotal)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="hw-receipt-divider" />
+          <div className="hw-receipt-totals">
+            <div><span>Subtotal</span><span className="hw-mono">{cs}{fmtNum(quote.subtotal)}</span></div>
+            {quote.discount > 0 && <div><span>Discount</span><span className="hw-mono">-{cs}{fmtNum(quote.discount)}</span></div>}
+            <div className="hw-receipt-total-final"><span>Total</span><span className="hw-mono">{cs}{fmtNum(quote.total)}</span></div>
+          </div>
+          <div className="hw-receipt-foot">This is an estimate. Prices are valid for 7 days.</div>
+          <div className="hw-receipt-teeth" />
+        </div>
+
+        <div className="hw-modal-actions hw-no-print">
+          <div style={{ flex: 1 }} />
+          <button className="hw-btn-ghost" onClick={onClose}>Close</button>
+          <button className="hw-btn-accent" onClick={() => window.print()}><Printer size={14} /> Print / Export</button>
+        </div>
+      </div>
     </div>
   );
 }
