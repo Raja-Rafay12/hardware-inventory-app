@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS public.invoices (
     invoice_number VARCHAR(100) NOT NULL,
     customer_name VARCHAR(255) DEFAULT '',
     customer_email VARCHAR(255) DEFAULT '',
+    customer_phone VARCHAR(50) DEFAULT '',
     date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     subtotal NUMERIC NOT NULL DEFAULT 0,
     discount NUMERIC NOT NULL DEFAULT 0,

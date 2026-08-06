@@ -9,7 +9,7 @@ if (fs.existsSync(externalEnvPath)) {
   require('dotenv').config({ path: path.join(__dirname, '.env') });
 }
 
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
@@ -158,6 +158,24 @@ const pool = new Pool({
     rejectUnauthorized: false // Required for secure cloud PostgreSQL hosts (like Neon)
   }
 });
+
+// Run database schema updates if needed
+async function runMigrations() {
+  if (!connectionString) return;
+  try {
+    const client = await pool.connect();
+    try {
+      await client.query('ALTER TABLE public.invoices ADD COLUMN IF NOT EXISTS customer_email VARCHAR(255) DEFAULT \'\'');
+      await client.query('ALTER TABLE public.invoices ADD COLUMN IF NOT EXISTS customer_phone VARCHAR(50) DEFAULT \'\'');
+      console.log("Database schema updates verified successfully.");
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    console.error("Database migration error:", err);
+  }
+}
+runMigrations();
 
 let currentUserId = null;
 
@@ -531,9 +549,9 @@ ipcMain.handle('db:save-invoices', async (event, invoices) => {
     const newInvoices = invoices.filter(i => !currentDbIds.includes(i.id));
     for (const inv of newInvoices) {
       await client.query(
-        `INSERT INTO public.invoices (id, user_id, invoice_number, customer_name, date, subtotal, discount, total, total_cost, profit, items)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-        [inv.id, currentUserId, inv.invoiceNumber, inv.customerName, inv.date, inv.subtotal, inv.discount, inv.total, inv.totalCost, inv.profit, JSON.stringify(inv.items)]
+        `INSERT INTO public.invoices (id, user_id, invoice_number, customer_name, customer_email, customer_phone, date, subtotal, discount, total, total_cost, profit, items)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+        [inv.id, currentUserId, inv.invoiceNumber, inv.customerName || '', inv.customerEmail || '', inv.customerPhone || '', inv.date, inv.subtotal, inv.discount, inv.total, inv.totalCost, inv.profit, JSON.stringify(inv.items)]
       );
     }
 
@@ -727,6 +745,16 @@ ipcMain.handle('db:send-invoice-email', async (event, invoice, user) => {
     return { success: true };
   } catch (err) {
     console.error("Failed to send invoice email:", err);
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('shell:open-external', async (event, url) => {
+  try {
+    await shell.openExternal(url);
+    return { success: true };
+  } catch (err) {
+    console.error("Failed to open external link:", err);
     return { success: false, error: err.message };
   }
 });

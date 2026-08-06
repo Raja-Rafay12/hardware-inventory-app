@@ -1923,6 +1923,7 @@ export default function HardwareInventoryApp({ user, onLogout }) {
   const [cart, setCart] = useState([]); // draft invoice items
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
   const [discount, setDiscount] = useState(0);
   const [lastInvoice, setLastInvoice] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -1930,6 +1931,7 @@ export default function HardwareInventoryApp({ user, onLogout }) {
   const [quotationCart, setQuotationCart] = useState([]);
   const [quotationCustName, setQuotationCustName] = useState("");
   const [quotationCustEmail, setQuotationCustEmail] = useState("");
+  const [quotationCustPhone, setQuotationCustPhone] = useState("");
   const [quotationDiscount, setQuotationDiscount] = useState(0);
   const [quotations, setQuotations] = useState(() => {
     try {
@@ -2098,6 +2100,7 @@ export default function HardwareInventoryApp({ user, onLogout }) {
             products={products} settings={settings} cart={cart} setCart={setCart}
             customerName={customerName} setCustomerName={setCustomerName}
             customerEmail={customerEmail} setCustomerEmail={setCustomerEmail}
+            customerPhone={customerPhone} setCustomerPhone={setCustomerPhone}
             discount={discount} setDiscount={setDiscount}
             persistProducts={persistProducts} persistInvoices={persistInvoices}
             persistSettings={persistSettings}
@@ -2117,13 +2120,15 @@ export default function HardwareInventoryApp({ user, onLogout }) {
             cart={quotationCart} setCart={setQuotationCart}
             customerName={quotationCustName} setCustomerName={setQuotationCustName}
             customerEmail={quotationCustEmail} setCustomerEmail={setQuotationCustEmail}
+            customerPhone={quotationCustPhone} setCustomerPhone={setQuotationCustPhone}
             discount={quotationDiscount} setDiscount={setQuotationDiscount}
             quotations={quotations} setQuotations={setQuotations}
             showToast={showToast} setView={setView}
-            onConvertToInvoice={(items, custName, custEmail, disc) => {
+            onConvertToInvoice={(items, custName, custEmail, custPhone, disc) => {
               setCart(items.map(i => ({ productId: i.productId, name: i.name, unit: i.unit, qty: i.qty, costPrice: i.costPrice, markup: i.markup, maxStock: products.find(p => p.id === i.productId)?.quantity || 9999 })));
               setCustomerName(custName);
               setCustomerEmail(custEmail);
+              setCustomerPhone(custPhone || "");
               setDiscount(disc);
               setView("newInvoice");
               showToast("Quotation loaded into Invoice Cart!");
@@ -3184,7 +3189,7 @@ function BulkEditModal({ type, selectedCount, onClose, onSave }) {
 /* ---------------------------------------------------------
    NEW INVOICE
 --------------------------------------------------------- */
-function NewInvoice({ products, settings, cart, setCart, customerName, setCustomerName, customerEmail, setCustomerEmail, discount, setDiscount, persistProducts, persistInvoices, persistSettings, invoices, showToast, setLastInvoice, setView, user }) {
+function NewInvoice({ products, settings, cart, setCart, customerName, setCustomerName, customerEmail, setCustomerEmail, customerPhone, setCustomerPhone, discount, setDiscount, persistProducts, persistInvoices, persistSettings, invoices, showToast, setLastInvoice, setView, user }) {
   const [search, setSearch] = useState("");
   const [preview, setPreview] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -3227,6 +3232,7 @@ function NewInvoice({ products, settings, cart, setCart, customerName, setCustom
         invoiceNumber,
         customerName: customerName.trim(),
         customerEmail: customerEmail.trim(),
+        customerPhone: customerPhone.trim(),
         date: new Date().toISOString(),
         items: cartWithPrice.map(i => ({ productId: i.productId, name: i.name, unit: i.unit, qty: i.qty, costPrice: i.costPrice, markup: i.markup, price: i.sellPrice, lineTotal: i.lineTotal })),
         subtotal, discount: discountAmt, total, totalCost, profit,
@@ -3261,6 +3267,7 @@ function NewInvoice({ products, settings, cart, setCart, customerName, setCustom
       setCart([]);
       setCustomerName("");
       setCustomerEmail("");
+      setCustomerPhone("");
       setDiscount(0);
       setLastInvoice(invoice);
       setPreview(invoice);
@@ -3280,7 +3287,7 @@ function NewInvoice({ products, settings, cart, setCart, customerName, setCustom
       <div className="hw-invoice-layout">
         <div className="hw-card">
           <div style={{ display: 'flex', gap: '12px' }}>
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1.2 }}>
               <Field label="Customer name (optional)">
                 <input value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Walk-in customer" />
               </Field>
@@ -3288,6 +3295,11 @@ function NewInvoice({ products, settings, cart, setCart, customerName, setCustom
             <div style={{ flex: 1 }}>
               <Field label="Customer email (optional)">
                 <input type="email" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} placeholder="customer@email.com" />
+              </Field>
+            </div>
+            <div style={{ flex: 1 }}>
+              <Field label="Customer phone (optional)">
+                <input type="text" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="e.g. 03328898666" />
               </Field>
             </div>
           </div>
@@ -3379,7 +3391,7 @@ function NewInvoice({ products, settings, cart, setCart, customerName, setCustom
 /* ---------------------------------------------------------
    QUOTATIONS & ESTIMATES VIEW
 --------------------------------------------------------- */
-function QuotationView({ products, settings, cart, setCart, customerName, setCustomerName, customerEmail, setCustomerEmail, discount, setDiscount, quotations, setQuotations, showToast, setView, onConvertToInvoice }) {
+function QuotationView({ products, settings, cart, setCart, customerName, setCustomerName, customerEmail, setCustomerEmail, customerPhone, setCustomerPhone, discount, setDiscount, quotations, setQuotations, showToast, setView, onConvertToInvoice }) {
   const [subView, setSubView] = useState("new"); // "new" | "history"
   const [search, setSearch] = useState("");
   const [preview, setPreview] = useState(null);
@@ -3419,6 +3431,7 @@ function QuotationView({ products, settings, cart, setCart, customerName, setCus
       quotationNumber,
       customerName: customerName.trim() || "Walk-in Customer",
       customerEmail: customerEmail.trim(),
+      customerPhone: customerPhone.trim(),
       date: new Date().toISOString(),
       items: cartWithPrice.map(i => ({ productId: i.productId, name: i.name, unit: i.unit, qty: i.qty, costPrice: i.costPrice, markup: i.markup, price: i.sellPrice, lineTotal: i.lineTotal })),
       subtotal, discount: discountAmt, total, totalCost, profit,
@@ -3428,6 +3441,7 @@ function QuotationView({ products, settings, cart, setCart, customerName, setCus
     setCart([]);
     setCustomerName("");
     setCustomerEmail("");
+    setCustomerPhone("");
     setDiscount(0);
     setPreview(quote);
     showToast(`${quotationNumber} saved locally!`);
@@ -3464,7 +3478,7 @@ function QuotationView({ products, settings, cart, setCart, customerName, setCus
         <div className="hw-invoice-layout">
           <div className="hw-card">
             <div style={{ display: 'flex', gap: '12px' }}>
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1.2 }}>
                 <Field label="Customer name (optional)">
                   <input value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Walk-in customer" />
                 </Field>
@@ -3472,6 +3486,11 @@ function QuotationView({ products, settings, cart, setCart, customerName, setCus
               <div style={{ flex: 1 }}>
                 <Field label="Customer email (optional)">
                   <input type="email" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} placeholder="customer@email.com" />
+                </Field>
+              </div>
+              <div style={{ flex: 1 }}>
+                <Field label="Customer phone (optional)">
+                  <input type="text" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="e.g. 03328898666" />
                 </Field>
               </div>
             </div>
@@ -3572,7 +3591,7 @@ function QuotationView({ products, settings, cart, setCart, customerName, setCus
                         <button className="hw-btn-ghost" style={{ padding: "6px 10px", fontSize: "12px" }} onClick={() => setPreview(q)}>
                           View/Print
                         </button>
-                        <button className="hw-btn-accent" style={{ padding: "6px 10px", fontSize: "12px" }} onClick={() => onConvertToInvoice(q.items, q.customerName, q.customerEmail, q.discount)}>
+                        <button className="hw-btn-accent" style={{ padding: "6px 10px", fontSize: "12px" }} onClick={() => onConvertToInvoice(q.items, q.customerName, q.customerEmail, q.customerPhone || "", q.discount)}>
                           Convert to Invoice
                         </button>
                         <button className="hw-icon-btn" onClick={() => deleteQuotation(q.id)} style={{ color: "var(--danger)" }}>
@@ -3600,6 +3619,41 @@ function QuotationView({ products, settings, cart, setCart, customerName, setCus
 
 function QuotationPreviewModal({ quote, settings, onClose }) {
   const cs = settings.currencySymbol;
+
+  const formatPhoneForWhatsapp = (phone) => {
+    let cleaned = phone.replace(/\D/g, "");
+    if (cleaned.startsWith("0") && cleaned.length === 11) {
+      cleaned = "92" + cleaned.slice(1);
+    }
+    return cleaned;
+  };
+
+  const sendWhatsapp = () => {
+    if (!quote.customerPhone) return;
+    const phone = formatPhoneForWhatsapp(quote.customerPhone);
+    const itemsText = quote.items
+      .map(i => `• ${i.name} x ${i.qty} (${i.unit}): ${cs}${fmtNum(i.lineTotal)}`)
+      .join("\n");
+      
+    const message = `Hello *${quote.customerName || "Customer"}*,
+
+Here is your quotation estimate from *${settings.shopName}*:
+📄 *Quotation:* ${quote.quotationNumber}
+📅 *Date:* ${fmtDateTime(quote.date)}
+━━━━━━━━━━━━━━━━━━
+${itemsText}
+━━━━━━━━━━━━━━━━━━
+*Subtotal:* ${cs}${fmtNum(quote.subtotal)}
+*Discount:* ${cs}${fmtNum(quote.discount)}
+*Estimate Total:* ${cs}${fmtNum(quote.total)}
+
+This is an estimate. Prices are valid for 7 days.
+Thank you!`;
+
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    window.db.openExternalLink(url);
+  };
+
   return (
     <div className="hw-modal-overlay" onClick={onClose}>
       <div className="hw-modal hw-statement-modal" onClick={e => e.stopPropagation()}>
@@ -3700,6 +3754,11 @@ function QuotationPreviewModal({ quote, settings, onClose }) {
         {/* Action buttons */}
         <div className="hw-modal-actions hw-no-print" style={{ padding: "16px 24px", background: "#F9FAFB", borderTop: "1px solid #E5E7EB" }}>
           <div style={{ flex: 1 }} />
+          {quote.customerPhone && (
+            <button className="hw-btn-accent" onClick={sendWhatsapp} style={{ background: "#25D366", borderColor: "#25D366" }}>
+              Share WhatsApp
+            </button>
+          )}
           <button className="hw-btn-ghost" onClick={onClose}>Close</button>
           <button className="hw-btn-accent" onClick={() => window.print()}><Printer size={14} /> Print / Export</button>
         </div>
@@ -4067,6 +4126,39 @@ function InvoicePreviewModal({ invoice, settings, onClose, onDelete }) {
   const cs = settings.currencySymbol;
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  const formatPhoneForWhatsapp = (phone) => {
+    let cleaned = phone.replace(/\D/g, "");
+    if (cleaned.startsWith("0") && cleaned.length === 11) {
+      cleaned = "92" + cleaned.slice(1);
+    }
+    return cleaned;
+  };
+
+  const sendWhatsapp = () => {
+    if (!invoice.customerPhone) return;
+    const phone = formatPhoneForWhatsapp(invoice.customerPhone);
+    const itemsText = invoice.items
+      .map(i => `• ${i.name} x ${i.qty} (${i.unit}): ${cs}${fmtNum(i.lineTotal)}`)
+      .join("\n");
+      
+    const message = `Hello *${invoice.customerName || "Customer"}*,
+
+Here is your invoice statement from *${settings.shopName}*:
+📄 *Invoice:* ${invoice.invoiceNumber}
+📅 *Date:* ${fmtDateTime(invoice.date)}
+━━━━━━━━━━━━━━━━━━
+${itemsText}
+━━━━━━━━━━━━━━━━━━
+*Subtotal:* ${cs}${fmtNum(invoice.subtotal)}
+*Discount:* ${cs}${fmtNum(invoice.discount)}
+*Total Amount:* ${cs}${fmtNum(invoice.total)}
+
+Thank you for your business!`;
+
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    window.db.openExternalLink(url);
+  };
+
   return (
     <div className="hw-modal-overlay" onClick={onClose}>
       <div className="hw-modal hw-statement-modal" onClick={e => e.stopPropagation()}>
@@ -4176,6 +4268,11 @@ function InvoicePreviewModal({ invoice, settings, onClose, onDelete }) {
             </>
           )}
           <div style={{ flex: 1 }} />
+          {invoice.customerPhone && (
+            <button className="hw-btn-accent" onClick={sendWhatsapp} style={{ background: "#25D366", borderColor: "#25D366" }}>
+              Share WhatsApp
+            </button>
+          )}
           <button className="hw-btn-ghost" onClick={onClose}>Close</button>
           <button className="hw-btn-accent" onClick={() => window.print()}><Printer size={14} /> Print / Export</button>
         </div>
