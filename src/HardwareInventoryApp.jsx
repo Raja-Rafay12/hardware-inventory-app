@@ -3507,7 +3507,7 @@ function QuotationView({ products, settings, cart, setCart, customerName, setCus
                         <NumInput className="hw-mini-input" step="0.01" min={0} value={i.costPrice} onChange={n => updateItem(i.productId, { costPrice: Math.max(0, n) })} />
                       </td>
                       <td>
-                        <NumInput className="hw-mini-input" step="0.1" min={0} value={i.markup} onChange={n => updateItem(i.productId, { markup: Math.max(0, n) })} style={{ width: 54 }} />%
+                        <NumInput className="hw-mini-input" step="0.1" value={i.markup} onChange={n => updateItem(i.productId, { markup: n })} style={{ width: 54 }} />%
                       </td>
                       <td>
                         <NumInput className="hw-mini-input" step="0.01" min={0} value={fmtNum(i.sellPrice)} onChange={n => {
