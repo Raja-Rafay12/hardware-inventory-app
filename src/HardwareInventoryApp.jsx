@@ -53,7 +53,16 @@ const fmtDayLabel = (key) => {
   return d.toLocaleDateString(undefined, { weekday: "short", year: "numeric", month: "short", day: "numeric" });
 };
 
-const DEFAULT_SETTINGS = { shopName: "My Hardware Shop", currencySymbol: "Rs ", invoiceCounter: 1, lowStockDefault: 5 };
+const DEFAULT_SETTINGS = { 
+  shopName: "My Hardware Shop", 
+  phone: "",
+  whatsapp: "",
+  bankDetails: "",
+  address: "",
+  currencySymbol: "Rs ", 
+  invoiceCounter: 1, 
+  lowStockDefault: 5 
+};
 
 const sellPrice = (p) => (Number(p.costPrice) || 0) * (1 + (Number(p.markup) || 0) / 100);
 
@@ -3806,23 +3815,50 @@ Thank you!`;
     <div className="hw-modal-overlay" onClick={onClose}>
       <div className="hw-modal hw-statement-modal" onClick={e => e.stopPropagation()}>
         <div className="hw-statement-card" id="hw-print-area">
-          {/* Header Banner */}
+          {/* Header Banner - Organization Details */}
           <div className="hw-statement-banner">
             <div className="hw-statement-banner-left">
-              <h2 className="hw-statement-shop-name">{settings.shopName}</h2>
-              <span className="hw-statement-shop-phone">System Generated Statement</span>
+              <h2 className="hw-statement-shop-name">{settings.shopName || "Organization Name"}</h2>
+              <div className="hw-statement-contact-row">
+                {settings.phone && <span>📞 Phone: <strong>{settings.phone}</strong></span>}
+                {settings.whatsapp && <span>💬 WhatsApp: <strong>{settings.whatsapp}</strong></span>}
+                {settings.address && <span>📍 {settings.address}</span>}
+              </div>
             </div>
-            <div className="hw-statement-banner-logo">
-              <span>⛏</span>
-              <span>DigiKhata Style</span>
+            <div className="hw-statement-banner-right">
+              {settings.bankDetails ? (
+                <div className="hw-statement-bank-card">
+                  <div className="hw-statement-bank-title">💳 Bank / JazzCash / EasyPaisa</div>
+                  <div className="hw-statement-bank-text">{settings.bankDetails}</div>
+                </div>
+              ) : (
+                <div className="hw-statement-type-pill">ESTIMATE</div>
+              )}
             </div>
           </div>
 
-          {/* Title block */}
-          <div className="hw-statement-title-block">
-            <h1 className="hw-statement-title">{quote.customerName || "Walk-in Customer"} Estimate</h1>
-            {quote.customerEmail && <span className="hw-statement-subtitle">Contact: {quote.customerEmail}</span>}
-            <span className="hw-statement-date-range">Generated: {fmtDateTime(quote.date)}</span>
+          {/* Receiver / Billed-To Info Block */}
+          <div className="hw-statement-receiver-block">
+            <div className="hw-statement-receiver-info">
+              <div className="hw-statement-section-label">BILL TO / RECEIVER:</div>
+              <div className="hw-statement-customer-name">{quote.customerName || "Walk-in Customer"}</div>
+              {quote.customerPhone && <div className="hw-statement-customer-sub">📞 Phone: {quote.customerPhone}</div>}
+              {quote.customerEmail && <div className="hw-statement-customer-sub">✉️ Email: {quote.customerEmail}</div>}
+            </div>
+            <div className="hw-statement-doc-info">
+              <div className="hw-statement-doc-row">
+                <span className="hw-statement-doc-label">Quote Number:</span>
+                <span className="hw-statement-doc-val">{quote.quotationNumber}</span>
+              </div>
+              <div className="hw-statement-doc-row">
+                <span className="hw-statement-doc-label">Date &amp; Time:</span>
+                <span className="hw-statement-doc-val">{fmtDateTime(quote.date)}</span>
+              </div>
+              <div className="hw-statement-doc-row">
+                <span className="hw-statement-doc-label">Estimate Validity:</span>
+                <span className="hw-statement-doc-val" style={{ color: "#EA580C" }}>7 Days</span>
+              </div>
+            </div>
           </div>
 
           {/* Summary Box */}
@@ -3891,11 +3927,12 @@ Thank you!`;
           {/* Footer Banner */}
           <div className="hw-statement-footer">
             <div className="hw-statement-footer-left">
-              <span>Start Using {settings.shopName}</span>
-              <button type="button" className="hw-statement-btn-install">ESTIMATE</button>
+              <span>{settings.shopName}</span>
+              {settings.phone && <span>· Ph: {settings.phone}</span>}
+              {settings.whatsapp && <span>· WA: {settings.whatsapp}</span>}
             </div>
             <div className="hw-statement-footer-right">
-              <span>Prices are valid for 7 days.</span>
+              <span>Prices are valid for 7 days. Thank you for your business!</span>
             </div>
           </div>
         </div>
@@ -4332,23 +4369,50 @@ Thank you for your business!`;
     <div className="hw-modal-overlay" onClick={onClose}>
       <div className="hw-modal hw-statement-modal" onClick={e => e.stopPropagation()}>
         <div className="hw-statement-card" id="hw-print-area">
-          {/* Header Banner */}
+          {/* Header Banner - Organization Details */}
           <div className="hw-statement-banner">
             <div className="hw-statement-banner-left">
-              <h2 className="hw-statement-shop-name">{settings.shopName}</h2>
-              <span className="hw-statement-shop-phone">System Generated Statement</span>
+              <h2 className="hw-statement-shop-name">{settings.shopName || "Organization Name"}</h2>
+              <div className="hw-statement-contact-row">
+                {settings.phone && <span>📞 Phone: <strong>{settings.phone}</strong></span>}
+                {settings.whatsapp && <span>💬 WhatsApp: <strong>{settings.whatsapp}</strong></span>}
+                {settings.address && <span>📍 {settings.address}</span>}
+              </div>
             </div>
-            <div className="hw-statement-banner-logo">
-              <span>⛏</span>
-              <span>DigiKhata Style</span>
+            <div className="hw-statement-banner-right">
+              {settings.bankDetails ? (
+                <div className="hw-statement-bank-card">
+                  <div className="hw-statement-bank-title">💳 Bank / JazzCash / EasyPaisa</div>
+                  <div className="hw-statement-bank-text">{settings.bankDetails}</div>
+                </div>
+              ) : (
+                <div className="hw-statement-type-pill">TAX INVOICE</div>
+              )}
             </div>
           </div>
 
-          {/* Title block */}
-          <div className="hw-statement-title-block">
-            <h1 className="hw-statement-title">{invoice.customerName || "Walk-in Customer"} Statement</h1>
-            {invoice.customerEmail && <span className="hw-statement-subtitle">Contact: {invoice.customerEmail}</span>}
-            <span className="hw-statement-date-range">Generated: {fmtDateTime(invoice.date)}</span>
+          {/* Receiver / Billed-To Info Block */}
+          <div className="hw-statement-receiver-block">
+            <div className="hw-statement-receiver-info">
+              <div className="hw-statement-section-label">BILL TO / RECEIVER:</div>
+              <div className="hw-statement-customer-name">{invoice.customerName || "Walk-in Customer"}</div>
+              {invoice.customerPhone && <div className="hw-statement-customer-sub">📞 Phone: {invoice.customerPhone}</div>}
+              {invoice.customerEmail && <div className="hw-statement-customer-sub">✉️ Email: {invoice.customerEmail}</div>}
+            </div>
+            <div className="hw-statement-doc-info">
+              <div className="hw-statement-doc-row">
+                <span className="hw-statement-doc-label">Invoice Number:</span>
+                <span className="hw-statement-doc-val">{invoice.invoiceNumber}</span>
+              </div>
+              <div className="hw-statement-doc-row">
+                <span className="hw-statement-doc-label">Date &amp; Time:</span>
+                <span className="hw-statement-doc-val">{fmtDateTime(invoice.date)}</span>
+              </div>
+              <div className="hw-statement-doc-row">
+                <span className="hw-statement-doc-label">Payment Status:</span>
+                <span className="hw-statement-doc-val" style={{ color: "#16A34A", fontWeight: 700 }}>Settled (Paid)</span>
+              </div>
+            </div>
           </div>
 
           {/* Summary Box */}
@@ -4417,11 +4481,12 @@ Thank you for your business!`;
           {/* Footer Banner */}
           <div className="hw-statement-footer">
             <div className="hw-statement-footer-left">
-              <span>Start Using {settings.shopName}</span>
-              <button type="button" className="hw-statement-btn-install">ACTIVE</button>
+              <span>{settings.shopName}</span>
+              {settings.phone && <span>· Ph: {settings.phone}</span>}
+              {settings.whatsapp && <span>· WA: {settings.whatsapp}</span>}
             </div>
             <div className="hw-statement-footer-right">
-              <span>Thank you for your business.</span>
+              <span>Thank you for your valued business!</span>
             </div>
           </div>
         </div>
@@ -4463,13 +4528,31 @@ function SettingsModal({ settings, onClose, onSave }) {
   const [form, setForm] = useState(settings);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   return (
-    <ModalShell onClose={onClose} title="Shop settings">
+    <ModalShell onClose={onClose} title="Organization & Shop Settings">
       <div className="hw-form-grid">
-        <Field label="Shop name" span={2}><input value={form.shopName} onChange={e => set("shopName", e.target.value)} /></Field>
-        <Field label="Currency symbol"><input value={form.currencySymbol} onChange={e => set("currencySymbol", e.target.value)} maxLength={6} /></Field>
-        <Field label="Default reorder level"><NumInput value={form.lowStockDefault} onChange={n => set("lowStockDefault", Math.max(0, n))} /></Field>
+        <Field label="Organization / Shop Name" span={2}>
+          <input value={form.shopName || ""} onChange={e => set("shopName", e.target.value)} placeholder="e.g. ABC Hardware & Electricals" />
+        </Field>
+        <Field label="Phone Number">
+          <input value={form.phone || ""} onChange={e => set("phone", e.target.value)} placeholder="e.g. 0332-8898666" />
+        </Field>
+        <Field label="WhatsApp Number">
+          <input value={form.whatsapp || ""} onChange={e => set("whatsapp", e.target.value)} placeholder="e.g. 0332-8898666" />
+        </Field>
+        <Field label="Bank / Account / JazzCash / EasyPaisa Details" span={2}>
+          <input value={form.bankDetails || ""} onChange={e => set("bankDetails", e.target.value)} placeholder="e.g. JazzCash / EasyPaisa: 0332-8898666 (Title: ABC Traders) / Bank Alfalah: 1234-5678" />
+        </Field>
+        <Field label="Address / Shop Location (optional)" span={2}>
+          <input value={form.address || ""} onChange={e => set("address", e.target.value)} placeholder="e.g. Main Market, Hardware Plaza, Shop #12" />
+        </Field>
+        <Field label="Currency symbol">
+          <input value={form.currencySymbol || ""} onChange={e => set("currencySymbol", e.target.value)} maxLength={6} />
+        </Field>
+        <Field label="Default reorder level">
+          <NumInput value={form.lowStockDefault || 5} onChange={n => set("lowStockDefault", Math.max(0, n))} />
+        </Field>
       </div>
-      <div className="hw-modal-actions">
+      <div className="hw-modal-actions" style={{ marginTop: 20 }}>
         <div style={{ flex: 1 }} />
         <button className="hw-btn-ghost" onClick={onClose}>Cancel</button>
         <button className="hw-btn-accent" onClick={() => onSave(form)}><Save size={14} /> Save settings</button>
@@ -4831,26 +4914,35 @@ function Style() {
       .hw-receipt-foot { text-align: center; font-size: 11.5px; color: var(--ink-soft); margin-top: 14px; font-style: italic; }
       .hw-receipt-teeth { height: 10px; margin: 10px -22px -14px; background: repeating-linear-gradient(90deg, transparent 0 6px, var(--bg) 6px 12px); }
 
-      /* STATEMENT REPORT (DIGIKHATA STYLE) */
-      .hw-statement-modal { max-width: 840px; padding: 0; width: 100%; max-height: 92vh; display: flex; flex-direction: column; background: #FFFFFF; border-radius: 12px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35); }
+      /* STATEMENT REPORT TEMPLATE */
+      .hw-statement-modal { max-width: 850px; padding: 0; width: 100%; max-height: 92vh; display: flex; flex-direction: column; background: #FFFFFF; border-radius: 12px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35); }
       .hw-statement-card { background: #FFFFFF; overflow-y: auto; flex: 1; min-height: 0; font-family: var(--font-body); display: flex; flex-direction: column; width: 100%; position: relative; }
       .hw-statement-modal .hw-modal-actions { flex-shrink: 0; margin-top: 0; background: #F9FAFB; border-top: 1px solid #E5E7EB; padding: 12px 20px; z-index: 10; }
       
-      /* Orange Top Banner */
-      .hw-statement-banner { background: #EA580C; color: #FFFFFF; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
-      .hw-statement-banner-left { display: flex; flex-direction: column; gap: 2px; }
-      .hw-statement-shop-name { font-size: 18px; font-weight: 700; font-family: var(--font-display); letter-spacing: -0.2px; margin: 0; }
-      .hw-statement-shop-phone { font-size: 12px; opacity: 0.9; }
-      .hw-statement-banner-logo { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; background: rgba(255, 255, 255, 0.15); padding: 4px 10px; border-radius: 6px; }
+      /* Orange Top Banner (Organization Info) */
+      .hw-statement-banner { background: #EA580C; color: #FFFFFF; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-shrink: 0; }
+      .hw-statement-banner-left { display: flex; flex-direction: column; gap: 4px; }
+      .hw-statement-shop-name { font-size: 20px; font-weight: 800; font-family: var(--font-display); letter-spacing: -0.2px; margin: 0; }
+      .hw-statement-contact-row { display: flex; flex-wrap: wrap; gap: 12px; font-size: 11.5px; opacity: 0.95; }
+      .hw-statement-banner-right { display: flex; align-items: center; }
+      .hw-statement-bank-card { background: rgba(255, 255, 255, 0.18); border: 1px solid rgba(255, 255, 255, 0.35); padding: 6px 12px; border-radius: 7px; text-align: right; max-width: 360px; }
+      .hw-statement-bank-title { font-size: 9.5px; text-transform: uppercase; font-weight: 700; opacity: 0.9; letter-spacing: 0.5px; }
+      .hw-statement-bank-text { font-size: 12px; font-weight: 600; word-break: break-word; }
+      .hw-statement-type-pill { background: #FFFFFF; color: #EA580C; font-weight: 800; font-size: 11px; padding: 5px 12px; border-radius: 6px; letter-spacing: 0.5px; }
 
-      /* Title Section */
-      .hw-statement-title-block { text-align: center; padding: 12px 20px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
-      .hw-statement-title { font-size: 20px; font-weight: 700; color: #111827; margin: 0; font-family: var(--font-display); }
-      .hw-statement-subtitle { font-size: 12px; color: #4B5563; margin: 0; font-weight: 500; }
-      .hw-statement-date-range { font-size: 11.5px; color: #6B7280; font-weight: 500; }
+      /* Receiver / Billed-To Block */
+      .hw-statement-receiver-block { display: flex; justify-content: space-between; align-items: flex-start; padding: 12px 20px; background: #FAFBFD; border-bottom: 1px solid #E5E7EB; flex-shrink: 0; gap: 16px; }
+      .hw-statement-receiver-info { display: flex; flex-direction: column; gap: 2px; }
+      .hw-statement-section-label { font-size: 10px; font-weight: 700; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+      .hw-statement-customer-name { font-size: 16px; font-weight: 700; color: #111827; }
+      .hw-statement-customer-sub { font-size: 12px; color: #4B5563; }
+      .hw-statement-doc-info { display: flex; flex-direction: column; gap: 3px; text-align: right; }
+      .hw-statement-doc-row { font-size: 12px; color: #4B5563; }
+      .hw-statement-doc-label { color: #6B7280; margin-right: 6px; }
+      .hw-statement-doc-val { font-weight: 600; color: #111827; font-family: var(--font-mono); }
 
       /* Summary Box */
-      .hw-statement-summary-box { border: 1px solid #E5E7EB; border-radius: 8px; margin: 0 20px 10px; display: grid; grid-template-columns: repeat(4, 1fr); background: #FAFBFD; overflow: hidden; flex-shrink: 0; }
+      .hw-statement-summary-box { border: 1px solid #E5E7EB; border-radius: 8px; margin: 12px 20px 10px; display: grid; grid-template-columns: repeat(4, 1fr); background: #FAFBFD; overflow: hidden; flex-shrink: 0; }
       .hw-statement-summary-col { padding: 8px 12px; display: flex; flex-direction: column; gap: 2px; border-right: 1px solid #E5E7EB; }
       .hw-statement-summary-col:last-child { border-right: none; }
       .hw-statement-summary-label { font-size: 10px; font-weight: 600; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -4877,9 +4969,9 @@ function Style() {
       .hw-statement-table-totals td { font-weight: 700; color: #111827; padding: 8px 12px; }
 
       /* Footer Banner */
-      .hw-statement-footer { background: #EA580C; color: #FFFFFF; padding: 8px 20px; display: flex; align-items: center; justify-content: space-between; font-size: 11.5px; font-weight: 500; flex-shrink: 0; }
+      .hw-statement-footer { background: #EA580C; color: #FFFFFF; padding: 9px 20px; display: flex; align-items: center; justify-content: space-between; font-size: 11.5px; font-weight: 500; flex-shrink: 0; }
       .hw-statement-footer-left { display: flex; align-items: center; gap: 8px; }
-      .hw-statement-footer-right { display: flex; align-items: center; gap: 4px; }
+      .hw-statement-footer-right { display: flex; align-items: center; gap: 4px; font-size: 11px; opacity: 0.95; }
       .hw-statement-btn-install { background: #FFFFFF; color: #EA580C; border: none; padding: 2px 6px; border-radius: 4px; font-size: 9.5px; font-weight: 700; text-transform: uppercase; }
 
       /* CUSTOM SCROLLBARS */

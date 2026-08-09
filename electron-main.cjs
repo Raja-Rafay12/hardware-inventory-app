@@ -167,6 +167,10 @@ async function runMigrations() {
     try {
       await client.query('ALTER TABLE public.invoices ADD COLUMN IF NOT EXISTS customer_email VARCHAR(255) DEFAULT \'\'');
       await client.query('ALTER TABLE public.invoices ADD COLUMN IF NOT EXISTS customer_phone VARCHAR(50) DEFAULT \'\'');
+      await client.query('ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS phone VARCHAR(50) DEFAULT \'\'');
+      await client.query('ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS whatsapp VARCHAR(50) DEFAULT \'\'');
+      await client.query('ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS bank_details TEXT DEFAULT \'\'');
+      await client.query('ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS address TEXT DEFAULT \'\'');
       console.log("Database schema updates verified successfully.");
     } finally {
       client.release();
@@ -442,6 +446,10 @@ ipcMain.handle('db:fetch-data', async () => {
     const dbSettings = settingsResult.rows[0];
     const settings = dbSettings ? {
       shopName: dbSettings.shop_name,
+      phone: dbSettings.phone || '',
+      whatsapp: dbSettings.whatsapp || '',
+      bankDetails: dbSettings.bank_details || '',
+      address: dbSettings.address || '',
       currencySymbol: dbSettings.currency_symbol,
       invoiceCounter: dbSettings.invoice_counter,
       lowStockDefault: dbSettings.low_stock_default
@@ -621,11 +629,19 @@ ipcMain.handle('db:save-settings', async (event, settings) => {
   if (!currentUserId) throw new Error('Unauthorized');
   try {
     await pool.query(
-      `INSERT INTO public.settings (user_id, shop_name, currency_symbol, invoice_counter, low_stock_default)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO public.settings (user_id, shop_name, phone, whatsapp, bank_details, address, currency_symbol, invoice_counter, low_stock_default)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        ON CONFLICT (user_id) 
-       DO UPDATE SET shop_name = $2, currency_symbol = $3, invoice_counter = $4, low_stock_default = $5`,
-      [currentUserId, settings.shopName, settings.currencySymbol, settings.invoiceCounter, settings.lowStockDefault]
+       DO UPDATE SET 
+         shop_name = $2, 
+         phone = $3, 
+         whatsapp = $4, 
+         bank_details = $5, 
+         address = $6, 
+         currency_symbol = $7, 
+         invoice_counter = $8, 
+         low_stock_default = $9`,
+      [currentUserId, settings.shopName, settings.phone || '', settings.whatsapp || '', settings.bankDetails || '', settings.address || '', settings.currencySymbol, settings.invoiceCounter, settings.lowStockDefault]
     );
     return { success: true };
   } catch (err) {

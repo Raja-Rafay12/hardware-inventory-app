@@ -74,6 +74,10 @@ CREATE TABLE IF NOT EXISTS public.expenses (
 CREATE TABLE IF NOT EXISTS public.settings (
     user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
     shop_name VARCHAR(255) NOT NULL DEFAULT 'My Hardware Shop',
+    phone VARCHAR(50) DEFAULT '',
+    whatsapp VARCHAR(50) DEFAULT '',
+    bank_details TEXT DEFAULT '',
+    address TEXT DEFAULT '',
     currency_symbol VARCHAR(50) NOT NULL DEFAULT 'Rs ',
     invoice_counter INTEGER NOT NULL DEFAULT 1,
     low_stock_default INTEGER NOT NULL DEFAULT 5,
