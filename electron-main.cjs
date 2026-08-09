@@ -177,7 +177,7 @@ async function runMigrations() {
       await client.query('ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS address TEXT DEFAULT \'\'');
       await client.query('ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS logo_url TEXT DEFAULT \'\'');
       await client.query('ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS quotation_title VARCHAR(100) DEFAULT \'MATERIAL REQUEST\'');
-      await client.query('ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS invoice_title VARCHAR(100) DEFAULT \'TAX INVOICE\'');
+      await client.query('ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS invoice_title VARCHAR(100) DEFAULT \'CASH INVOICE\'');
       console.log("Database schema updates verified successfully.");
     } finally {
       client.release();

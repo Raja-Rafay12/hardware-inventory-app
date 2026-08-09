@@ -64,7 +64,7 @@ const DEFAULT_SETTINGS = {
   address: "",
   logoUrl: "",
   quotationTitle: "MATERIAL REQUEST",
-  invoiceTitle: "TAX INVOICE",
+  invoiceTitle: "CASH INVOICE",
   currencySymbol: "Rs ", 
   invoiceCounter: 1, 
   lowStockDefault: 5 
@@ -4442,7 +4442,9 @@ Thank you for your business!`;
 
             {/* Centered Document Title */}
             <div className="hw-excel-title-bar">
-              <h2 className="hw-excel-doc-title">{settings.invoiceTitle || "TAX INVOICE"}</h2>
+              <h2 className="hw-excel-doc-title">
+                {settings.invoiceTitle && settings.invoiceTitle !== "TAX INVOICE" ? settings.invoiceTitle : "CASH INVOICE"}
+              </h2>
             </div>
           </div>
 
@@ -4801,7 +4803,7 @@ function SettingsModal({ settings, onClose, onSave }) {
           <input value={form.quotationTitle || ""} onChange={e => set("quotationTitle", e.target.value)} placeholder="e.g. MATERIAL REQUEST" />
         </Field>
         <Field label="Invoice Document Heading">
-          <input value={form.invoiceTitle || ""} onChange={e => set("invoiceTitle", e.target.value)} placeholder="e.g. TAX INVOICE" />
+          <input value={form.invoiceTitle || ""} onChange={e => set("invoiceTitle", e.target.value)} placeholder="e.g. CASH INVOICE" />
         </Field>
 
         <Field label="Currency symbol">
