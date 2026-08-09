@@ -4511,9 +4511,9 @@ function Style() {
       .hw-date-input { border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-family: var(--font-body); font-size: 12.5px; background: var(--surface); color: var(--ink-soft); }
 
       /* TABLE */
-      .hw-table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+      .hw-table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
       .hw-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-      .hw-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); font-weight: 600; padding: 12px 14px; border-bottom: 1px solid var(--border); background: var(--surface-alt); }
+      .hw-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); font-weight: 600; padding: 12px 14px; border-bottom: 1px solid var(--border); background: var(--surface-alt); position: sticky; top: 0; z-index: 2; }
       .hw-table td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
       .hw-table tbody tr:last-child td { border-bottom: none; }
       .hw-table tbody tr:hover { background: var(--surface-alt); }
@@ -4604,7 +4604,7 @@ function Style() {
       .hw-btn-block { width: 100%; justify-content: center; margin-top: 12px; }
 
       /* MODALS */
-      .hw-modal-overlay { position: fixed; inset: 0; background: rgba(17, 24, 39, 0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 20px; }
+      .hw-modal-overlay { position: fixed; inset: 0; background: rgba(17, 24, 39, 0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 20px; overflow-y: auto; }
       .hw-modal { background: var(--surface); border-radius: 12px; width: 100%; max-width: 460px; padding: 22px 24px; max-height: 88vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); }
       .hw-modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
       .hw-modal-head h3 { font-family: var(--font-display); font-size: 18px; font-weight: 700; margin: 0; }
@@ -4619,6 +4619,8 @@ function Style() {
 
       /* INVOICE LAYOUT */
       .hw-invoice-layout { display: grid; grid-template-columns: 1.6fr 1fr; gap: 14px; align-items: start; }
+      .hw-invoice-layout .hw-table-wrap { max-height: 480px; overflow-y: auto; }
+      .hw-summary-card { position: sticky; top: 20px; z-index: 5; }
       .hw-summary-card h3 { font-family: var(--font-display); font-size: 17px; font-weight: 600; margin: 0 0 12px; }
       .hw-summary-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; font-size: 13.5px; }
       .hw-summary-total { border-top: 1px solid var(--border); margin-top: 6px; padding-top: 10px; font-family: var(--font-display); font-size: 19px; font-weight: 600; }
@@ -4655,24 +4657,25 @@ function Style() {
       .hw-receipt-teeth { height: 10px; margin: 10px -22px -14px; background: repeating-linear-gradient(90deg, transparent 0 6px, var(--bg) 6px 12px); }
 
       /* STATEMENT REPORT (DIGIKHATA STYLE) */
-      .hw-statement-modal { max-width: 720px; padding: 0; width: 100%; overflow: visible; background: transparent; }
-      .hw-statement-card { background: #FFFFFF; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); font-family: var(--font-body); display: flex; flex-direction: column; width: 100%; position: relative; }
+      .hw-statement-modal { max-width: 760px; padding: 0; width: 100%; max-height: 90vh; display: flex; flex-direction: column; background: #FFFFFF; border-radius: 12px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35); }
+      .hw-statement-card { background: #FFFFFF; overflow-y: auto; flex: 1; font-family: var(--font-body); display: flex; flex-direction: column; width: 100%; position: relative; }
+      .hw-statement-modal .hw-modal-actions { flex-shrink: 0; margin-top: 0; background: #F9FAFB; border-top: 1px solid #E5E7EB; padding: 14px 24px; z-index: 10; }
       
       /* Orange Top Banner */
-      .hw-statement-banner { background: #EA580C; color: #FFFFFF; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
+      .hw-statement-banner { background: #EA580C; color: #FFFFFF; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
       .hw-statement-banner-left { display: flex; flex-direction: column; gap: 4px; }
       .hw-statement-shop-name { font-size: 20px; font-weight: 700; font-family: var(--font-display); letter-spacing: -0.2px; margin: 0; }
       .hw-statement-shop-phone { font-size: 13px; opacity: 0.9; }
       .hw-statement-banner-logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; background: rgba(255, 255, 255, 0.15); padding: 6px 12px; border-radius: 6px; }
 
       /* Title Section */
-      .hw-statement-title-block { text-align: center; padding: 24px 24px 16px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+      .hw-statement-title-block { text-align: center; padding: 24px 24px 16px; display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
       .hw-statement-title { font-size: 24px; font-weight: 700; color: #111827; margin: 0; font-family: var(--font-display); }
       .hw-statement-subtitle { font-size: 13px; color: #4B5563; margin: 0; font-weight: 500; }
       .hw-statement-date-range { font-size: 12px; color: #6B7280; font-weight: 500; }
 
       /* Summary Box */
-      .hw-statement-summary-box { border: 1px solid #E5E7EB; border-radius: 8px; margin: 0 24px 20px; display: grid; grid-template-columns: repeat(4, 1fr); background: #FAFBFD; overflow: hidden; }
+      .hw-statement-summary-box { border: 1px solid #E5E7EB; border-radius: 8px; margin: 0 24px 20px; display: grid; grid-template-columns: repeat(4, 1fr); background: #FAFBFD; overflow: hidden; flex-shrink: 0; }
       .hw-statement-summary-col { padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; border-right: 1px solid #E5E7EB; }
       .hw-statement-summary-col:last-child { border-right: none; }
       .hw-statement-summary-label { font-size: 11px; font-weight: 600; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -4682,7 +4685,7 @@ function Style() {
       .hw-statement-summary-sub { font-size: 10px; color: #9CA3AF; }
 
       /* Entries Count Info */
-      .hw-statement-entries-info { font-size: 13px; font-weight: 700; color: #111827; margin: 0 24px 8px; }
+      .hw-statement-entries-info { font-size: 13px; font-weight: 700; color: #111827; margin: 0 24px 8px; flex-shrink: 0; }
 
       /* Statement Table */
       .hw-statement-table-wrap { border: 1px solid #E5E7EB; border-radius: 8px; margin: 0 24px 24px; overflow: hidden; }
@@ -4699,20 +4702,52 @@ function Style() {
       .hw-statement-table-totals td { font-weight: 700; color: #111827; }
 
       /* Footer Banner */
-      .hw-statement-footer { background: #EA580C; color: #FFFFFF; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 500; }
+      .hw-statement-footer { background: #EA580C; color: #FFFFFF; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 500; flex-shrink: 0; }
       .hw-statement-footer-left { display: flex; align-items: center; gap: 8px; }
       .hw-statement-footer-right { display: flex; align-items: center; gap: 4px; }
       .hw-statement-btn-install { background: #FFFFFF; color: #EA580C; border: none; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
 
+      /* CUSTOM SCROLLBARS */
+      .hw-main::-webkit-scrollbar,
+      .hw-table-wrap::-webkit-scrollbar,
+      .hw-statement-card::-webkit-scrollbar,
+      .hw-modal::-webkit-scrollbar,
+      .hw-modal-overlay::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      .hw-main::-webkit-scrollbar-track,
+      .hw-table-wrap::-webkit-scrollbar-track,
+      .hw-statement-card::-webkit-scrollbar-track,
+      .hw-modal::-webkit-scrollbar-track,
+      .hw-modal-overlay::-webkit-scrollbar-track {
+        background: #F3F4F6;
+        border-radius: 4px;
+      }
+      .hw-main::-webkit-scrollbar-thumb,
+      .hw-table-wrap::-webkit-scrollbar-thumb,
+      .hw-statement-card::-webkit-scrollbar-thumb,
+      .hw-modal::-webkit-scrollbar-thumb,
+      .hw-modal-overlay::-webkit-scrollbar-thumb {
+        background: #CBD5E1;
+        border-radius: 4px;
+      }
+      .hw-main::-webkit-scrollbar-thumb:hover,
+      .hw-table-wrap::-webkit-scrollbar-thumb:hover,
+      .hw-statement-card::-webkit-scrollbar-thumb:hover,
+      .hw-modal::-webkit-scrollbar-thumb:hover,
+      .hw-modal-overlay::-webkit-scrollbar-thumb:hover {
+        background: #94A3B8;
+      }
+
       @media print {
+        .hw-statement-modal { max-height: none !important; overflow: visible !important; box-shadow: none !important; }
+        .hw-statement-card { overflow: visible !important; height: auto !important; }
         .hw-statement-banner { background-color: #EA580C !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .hw-statement-footer { background-color: #EA580C !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .hw-statement-summary-box { background-color: #FAFBFD !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .hw-statement-table th { background-color: #F3F4F6 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .hw-statement-table-totals { background-color: #F9FAFB !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      }
-
-      @media print {
         body * { visibility: hidden; }
         #hw-print-area, #hw-print-area * { visibility: visible; }
         #hw-print-area { position: fixed; top: 0; left: 0; width: 100%; }
