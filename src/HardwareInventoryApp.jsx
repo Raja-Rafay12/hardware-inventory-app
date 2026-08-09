@@ -3215,7 +3215,7 @@ function NewInvoice({ products, settings, cart, setCart, customerName, setCustom
   const [isSaving, setIsSaving] = useState(false);
   const cs = settings.currencySymbol;
 
-  const matches = search.trim() ? products.filter(p => p.name.toLowerCase().includes(search.toLowerCase())).slice(0, 6) : [];
+  const matches = search.trim() ? products.filter(p => p.name.toLowerCase().includes(search.toLowerCase())).slice(0, 12) : [];
 
   const addToCart = (product) => {
     setSearch("");
@@ -3390,6 +3390,13 @@ function NewInvoice({ products, settings, cart, setCart, customerName, setCustom
             )}
           </div>
 
+          {cart.length > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 14, marginBottom: -6, fontSize: '12.5px', color: 'var(--ink-soft)', fontWeight: 600 }}>
+              <span>Items in Invoice ({cart.length})</span>
+              <span>Total Units: {cart.reduce((s, i) => s + i.qty, 0)}</span>
+            </div>
+          )}
+
           <div className="hw-table-wrap" style={{ marginTop: 14 }}>
             <table className="hw-table hw-table-tight">
               <thead>
@@ -3474,7 +3481,7 @@ function QuotationView({ products, settings, cart, setCart, customerName, setCus
   const [query, setQuery] = useState("");
   const cs = settings.currencySymbol;
 
-  const matches = search.trim() ? products.filter(p => p.name.toLowerCase().includes(search.toLowerCase())).slice(0, 6) : [];
+  const matches = search.trim() ? products.filter(p => p.name.toLowerCase().includes(search.toLowerCase())).slice(0, 12) : [];
 
   const addToCart = (product) => {
     setSearch("");
@@ -3612,6 +3619,13 @@ function QuotationView({ products, settings, cart, setCart, customerName, setCus
                 </div>
               )}
             </div>
+
+            {cart.length > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 14, marginBottom: -6, fontSize: '12.5px', color: 'var(--ink-soft)', fontWeight: 600 }}>
+                <span>Quote Items ({cart.length})</span>
+                <span>Total Units: {cart.reduce((s, i) => s + i.qty, 0)}</span>
+              </div>
+            )}
 
             <div className="hw-table-wrap" style={{ marginTop: 14 }}>
               <table className="hw-table hw-table-tight">
@@ -3834,7 +3848,8 @@ Thank you!`;
 
           {/* Entries Count Info */}
           <div className="hw-statement-entries-info">
-            No. of Items: {quote.items.length} (All)
+            <span>No. of Items: {quote.items.length} (Total {quote.items.reduce((s, i) => s + i.qty, 0)} units)</span>
+            {quote.items.length > 8 && <span style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 600 }}>Scroll down inside statement to view all items ↓</span>}
           </div>
 
           {/* Items Table */}
@@ -4359,7 +4374,8 @@ Thank you for your business!`;
 
           {/* Entries Count Info */}
           <div className="hw-statement-entries-info">
-            No. of Items: {invoice.items.length} (All)
+            <span>No. of Items: {invoice.items.length} (Total {invoice.items.reduce((s, i) => s + i.qty, 0)} units)</span>
+            {invoice.items.length > 8 && <span style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 600 }}>Scroll down inside statement to view all items ↓</span>}
           </div>
 
           {/* Items Table */}
@@ -4816,41 +4832,41 @@ function Style() {
       .hw-receipt-teeth { height: 10px; margin: 10px -22px -14px; background: repeating-linear-gradient(90deg, transparent 0 6px, var(--bg) 6px 12px); }
 
       /* STATEMENT REPORT (DIGIKHATA STYLE) */
-      .hw-statement-modal { max-width: 760px; padding: 0; width: 100%; max-height: 90vh; display: flex; flex-direction: column; background: #FFFFFF; border-radius: 12px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35); }
-      .hw-statement-card { background: #FFFFFF; overflow-y: auto; flex: 1; font-family: var(--font-body); display: flex; flex-direction: column; width: 100%; position: relative; }
-      .hw-statement-modal .hw-modal-actions { flex-shrink: 0; margin-top: 0; background: #F9FAFB; border-top: 1px solid #E5E7EB; padding: 14px 24px; z-index: 10; }
+      .hw-statement-modal { max-width: 840px; padding: 0; width: 100%; max-height: 92vh; display: flex; flex-direction: column; background: #FFFFFF; border-radius: 12px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35); }
+      .hw-statement-card { background: #FFFFFF; overflow-y: auto; flex: 1; min-height: 0; font-family: var(--font-body); display: flex; flex-direction: column; width: 100%; position: relative; }
+      .hw-statement-modal .hw-modal-actions { flex-shrink: 0; margin-top: 0; background: #F9FAFB; border-top: 1px solid #E5E7EB; padding: 12px 20px; z-index: 10; }
       
       /* Orange Top Banner */
-      .hw-statement-banner { background: #EA580C; color: #FFFFFF; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
-      .hw-statement-banner-left { display: flex; flex-direction: column; gap: 4px; }
-      .hw-statement-shop-name { font-size: 20px; font-weight: 700; font-family: var(--font-display); letter-spacing: -0.2px; margin: 0; }
-      .hw-statement-shop-phone { font-size: 13px; opacity: 0.9; }
-      .hw-statement-banner-logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; background: rgba(255, 255, 255, 0.15); padding: 6px 12px; border-radius: 6px; }
+      .hw-statement-banner { background: #EA580C; color: #FFFFFF; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+      .hw-statement-banner-left { display: flex; flex-direction: column; gap: 2px; }
+      .hw-statement-shop-name { font-size: 18px; font-weight: 700; font-family: var(--font-display); letter-spacing: -0.2px; margin: 0; }
+      .hw-statement-shop-phone { font-size: 12px; opacity: 0.9; }
+      .hw-statement-banner-logo { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; background: rgba(255, 255, 255, 0.15); padding: 4px 10px; border-radius: 6px; }
 
       /* Title Section */
-      .hw-statement-title-block { text-align: center; padding: 24px 24px 16px; display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
-      .hw-statement-title { font-size: 24px; font-weight: 700; color: #111827; margin: 0; font-family: var(--font-display); }
-      .hw-statement-subtitle { font-size: 13px; color: #4B5563; margin: 0; font-weight: 500; }
-      .hw-statement-date-range { font-size: 12px; color: #6B7280; font-weight: 500; }
+      .hw-statement-title-block { text-align: center; padding: 12px 20px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
+      .hw-statement-title { font-size: 20px; font-weight: 700; color: #111827; margin: 0; font-family: var(--font-display); }
+      .hw-statement-subtitle { font-size: 12px; color: #4B5563; margin: 0; font-weight: 500; }
+      .hw-statement-date-range { font-size: 11.5px; color: #6B7280; font-weight: 500; }
 
       /* Summary Box */
-      .hw-statement-summary-box { border: 1px solid #E5E7EB; border-radius: 8px; margin: 0 24px 20px; display: grid; grid-template-columns: repeat(4, 1fr); background: #FAFBFD; overflow: hidden; flex-shrink: 0; }
-      .hw-statement-summary-col { padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; border-right: 1px solid #E5E7EB; }
+      .hw-statement-summary-box { border: 1px solid #E5E7EB; border-radius: 8px; margin: 0 20px 10px; display: grid; grid-template-columns: repeat(4, 1fr); background: #FAFBFD; overflow: hidden; flex-shrink: 0; }
+      .hw-statement-summary-col { padding: 8px 12px; display: flex; flex-direction: column; gap: 2px; border-right: 1px solid #E5E7EB; }
       .hw-statement-summary-col:last-child { border-right: none; }
-      .hw-statement-summary-label { font-size: 11px; font-weight: 600; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; }
-      .hw-statement-summary-value { font-size: 18px; font-weight: 700; color: #111827; font-family: var(--font-mono); }
+      .hw-statement-summary-label { font-size: 10px; font-weight: 600; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; }
+      .hw-statement-summary-value { font-size: 16px; font-weight: 700; color: #111827; font-family: var(--font-mono); }
       .hw-statement-summary-value.red { color: #DC2626; }
       .hw-statement-summary-value.green { color: #16A34A; }
-      .hw-statement-summary-sub { font-size: 10px; color: #9CA3AF; }
+      .hw-statement-summary-sub { font-size: 9.5px; color: #9CA3AF; }
 
       /* Entries Count Info */
-      .hw-statement-entries-info { font-size: 13px; font-weight: 700; color: #111827; margin: 0 24px 8px; flex-shrink: 0; }
+      .hw-statement-entries-info { font-size: 12px; font-weight: 700; color: #111827; margin: 0 20px 6px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
 
       /* Statement Table */
-      .hw-statement-table-wrap { border: 1px solid #E5E7EB; border-radius: 8px; margin: 0 24px 24px; overflow: hidden; }
-      .hw-statement-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
-      .hw-statement-table th { background: #F3F4F6; padding: 10px 14px; font-weight: 600; color: #374151; font-size: 12px; border-bottom: 1px solid #E5E7EB; }
-      .hw-statement-table td { padding: 12px 14px; border-bottom: 1px solid #F3F4F6; color: #4B5563; }
+      .hw-statement-table-wrap { border: 1px solid #E5E7EB; border-radius: 8px; margin: 0 20px 16px; overflow-x: auto; overflow-y: visible; }
+      .hw-statement-table { width: 100%; border-collapse: collapse; font-size: 12.5px; text-align: left; }
+      .hw-statement-table th { background: #F3F4F6; padding: 8px 12px; font-weight: 600; color: #374151; font-size: 11.5px; border-bottom: 1px solid #E5E7EB; position: sticky; top: 0; z-index: 2; }
+      .hw-statement-table td { padding: 7px 12px; border-bottom: 1px solid #F3F4F6; color: #4B5563; }
       .hw-statement-table tbody tr:last-child td { border-bottom: none; }
       .hw-statement-table td.mono { font-family: var(--font-mono); font-weight: 500; }
       .hw-statement-table td.green { color: #16A34A; font-weight: 600; }
@@ -4858,13 +4874,13 @@ function Style() {
 
       /* Grand Total Row */
       .hw-statement-table-totals { background: #F9FAFB; border-top: 2px solid #E5E7EB; font-weight: 700 !important; color: #111827 !important; }
-      .hw-statement-table-totals td { font-weight: 700; color: #111827; }
+      .hw-statement-table-totals td { font-weight: 700; color: #111827; padding: 8px 12px; }
 
       /* Footer Banner */
-      .hw-statement-footer { background: #EA580C; color: #FFFFFF; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 500; flex-shrink: 0; }
+      .hw-statement-footer { background: #EA580C; color: #FFFFFF; padding: 8px 20px; display: flex; align-items: center; justify-content: space-between; font-size: 11.5px; font-weight: 500; flex-shrink: 0; }
       .hw-statement-footer-left { display: flex; align-items: center; gap: 8px; }
       .hw-statement-footer-right { display: flex; align-items: center; gap: 4px; }
-      .hw-statement-btn-install { background: #FFFFFF; color: #EA580C; border: none; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+      .hw-statement-btn-install { background: #FFFFFF; color: #EA580C; border: none; padding: 2px 6px; border-radius: 4px; font-size: 9.5px; font-weight: 700; text-transform: uppercase; }
 
       /* CUSTOM SCROLLBARS */
       .hw-main::-webkit-scrollbar,
