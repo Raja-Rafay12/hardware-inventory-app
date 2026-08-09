@@ -54,14 +54,14 @@ const fmtDayLabel = (key) => {
 };
 
 const DEFAULT_SETTINGS = { 
-  shopName: "CAPITAL HARDWARE TRADING", 
-  shopNameUrdu: "کیپیٹل ہارڈ و ئیر ٹریڈنگ",
-  phone: "0332-8898666",
-  email: "capitaalht@gmail.com",
-  whatsapp: "0332-8898666",
-  paymentDetails: "JAZZ CASH: 0307-8898663 RAJA SHAHID. MEEZAN BANK: 0829-010-3838087 CAPITAL HARDWARE",
-  bankDetails: "JAZZ CASH: 0307-8898663 RAJA SHAHID. MEEZAN BANK: 0829-010-3838087 CAPITAL HARDWARE",
-  address: "I-16 Islamabad",
+  shopName: "My Organization", 
+  shopNameUrdu: "",
+  phone: "",
+  email: "",
+  whatsapp: "",
+  paymentDetails: "",
+  bankDetails: "",
+  address: "",
   currencySymbol: "Rs ", 
   invoiceCounter: 1, 
   lowStockDefault: 5 
@@ -3831,44 +3831,33 @@ Thank you!`;
     <div className="hw-modal-overlay" onClick={onClose}>
       <div className="hw-modal hw-statement-modal" onClick={e => e.stopPropagation()}>
         <div className="hw-statement-card" id="hw-print-area">
-          {/* Authentic Excel Style Header */}
-          <div className="hw-excel-header">
-            <div className="hw-excel-brand-area">
-              {/* Logo / Brand badge on left */}
-              <div className="hw-excel-logo">
-                <div className="hw-excel-logo-icon">C</div>
-                <div className="hw-excel-logo-text">
-                  <span>Capital</span>
-                  <small>Hardware</small>
-                </div>
-              </div>
-
-              {/* Main Centered Organization Info */}
-              <div className="hw-excel-main-center">
-                <h1 className="hw-excel-org-title">{settings.shopName || "CAPITAL HARDWARE TRADING"}</h1>
-                {settings.shopNameUrdu && (
-                  <div className="hw-excel-org-urdu">{settings.shopNameUrdu}</div>
-                )}
-                <div className="hw-excel-line-bold">
-                  Tel: {settings.phone || "0332-8898666"} {settings.address && <span> · {settings.address}</span>}
-                </div>
-                {(settings.paymentDetails || settings.bankDetails) && (
-                  <div className="hw-excel-line-payment">
-                    {settings.paymentDetails || settings.bankDetails}
-                  </div>
-                )}
-                {settings.email && (
-                  <div className="hw-excel-line-email">
-                    E-mail: {settings.email}
-                  </div>
-                )}
+          {/* Themed Header Banner - Centered & Fully Customizable */}
+          <div className="hw-statement-banner">
+            <div className="hw-statement-center-header">
+              <h1 className="hw-statement-org-title">{settings.shopName || "MY ORGANIZATION"}</h1>
+              {settings.shopNameUrdu && (
+                <div className="hw-statement-org-urdu">{settings.shopNameUrdu}</div>
+              )}
+              <div className="hw-statement-contact-center">
+                {settings.phone && <span>📞 Tel: <strong>{settings.phone}</strong></span>}
+                {settings.whatsapp && <span>💬 WhatsApp: <strong>{settings.whatsapp}</strong></span>}
+                {settings.email && <span>✉️ Email: <strong>{settings.email}</strong></span>}
+                {settings.address && <span>📍 {settings.address}</span>}
               </div>
             </div>
+          </div>
 
-            {/* Centered Document Title */}
-            <div className="hw-excel-title-bar">
-              <h2 className="hw-excel-doc-title">MATERIAL REQUEST</h2>
+          {/* Prominent Online Banking & Payment Details Bar */}
+          {(settings.paymentDetails || settings.bankDetails) && (
+            <div className="hw-statement-payment-bar">
+              <span className="hw-statement-payment-tag">🏦 ONLINE BANKING / PAYMENT DETAILS:</span>
+              <span className="hw-statement-payment-text">{settings.paymentDetails || settings.bankDetails}</span>
             </div>
+          )}
+
+          {/* Document Title */}
+          <div className="hw-statement-title-center">
+            <h2 className="hw-statement-doc-title">MATERIAL REQUEST / QUOTATION ESTIMATE</h2>
           </div>
 
           {/* Receiver / Billed-To Info Block */}
@@ -3890,7 +3879,7 @@ Thank you!`;
               </div>
               <div className="hw-statement-doc-row">
                 <span className="hw-statement-doc-label">Estimate Validity:</span>
-                <span className="hw-statement-doc-val" style={{ color: "#EA580C" }}>7 Days</span>
+                <span className="hw-statement-doc-val" style={{ color: "#EA580C", fontWeight: 700 }}>7 Days</span>
               </div>
             </div>
           </div>
@@ -4403,44 +4392,33 @@ Thank you for your business!`;
     <div className="hw-modal-overlay" onClick={onClose}>
       <div className="hw-modal hw-statement-modal" onClick={e => e.stopPropagation()}>
         <div className="hw-statement-card" id="hw-print-area">
-          {/* Authentic Excel Style Header */}
-          <div className="hw-excel-header">
-            <div className="hw-excel-brand-area">
-              {/* Logo / Brand badge on left */}
-              <div className="hw-excel-logo">
-                <div className="hw-excel-logo-icon">C</div>
-                <div className="hw-excel-logo-text">
-                  <span>Capital</span>
-                  <small>Hardware</small>
-                </div>
-              </div>
-
-              {/* Main Centered Organization Info */}
-              <div className="hw-excel-main-center">
-                <h1 className="hw-excel-org-title">{settings.shopName || "CAPITAL HARDWARE TRADING"}</h1>
-                {settings.shopNameUrdu && (
-                  <div className="hw-excel-org-urdu">{settings.shopNameUrdu}</div>
-                )}
-                <div className="hw-excel-line-bold">
-                  Tel: {settings.phone || "0332-8898666"} {settings.address && <span> · {settings.address}</span>}
-                </div>
-                {(settings.paymentDetails || settings.bankDetails) && (
-                  <div className="hw-excel-line-payment">
-                    {settings.paymentDetails || settings.bankDetails}
-                  </div>
-                )}
-                {settings.email && (
-                  <div className="hw-excel-line-email">
-                    E-mail: {settings.email}
-                  </div>
-                )}
+          {/* Themed Header Banner - Centered & Fully Customizable */}
+          <div className="hw-statement-banner">
+            <div className="hw-statement-center-header">
+              <h1 className="hw-statement-org-title">{settings.shopName || "MY ORGANIZATION"}</h1>
+              {settings.shopNameUrdu && (
+                <div className="hw-statement-org-urdu">{settings.shopNameUrdu}</div>
+              )}
+              <div className="hw-statement-contact-center">
+                {settings.phone && <span>📞 Tel: <strong>{settings.phone}</strong></span>}
+                {settings.whatsapp && <span>💬 WhatsApp: <strong>{settings.whatsapp}</strong></span>}
+                {settings.email && <span>✉️ Email: <strong>{settings.email}</strong></span>}
+                {settings.address && <span>📍 {settings.address}</span>}
               </div>
             </div>
+          </div>
 
-            {/* Centered Document Title */}
-            <div className="hw-excel-title-bar">
-              <h2 className="hw-excel-doc-title">SALES INVOICE / CASH MEMO</h2>
+          {/* Prominent Online Banking & Payment Details Bar */}
+          {(settings.paymentDetails || settings.bankDetails) && (
+            <div className="hw-statement-payment-bar">
+              <span className="hw-statement-payment-tag">🏦 ONLINE BANKING / PAYMENT DETAILS:</span>
+              <span className="hw-statement-payment-text">{settings.paymentDetails || settings.bankDetails}</span>
             </div>
+          )}
+
+          {/* Document Title */}
+          <div className="hw-statement-title-center">
+            <h2 className="hw-statement-doc-title">SALES INVOICE / CASH MEMO</h2>
           </div>
 
           {/* Receiver / Billed-To Info Block */}
@@ -5070,24 +5048,20 @@ function Style() {
       .hw-statement-card { background: #FFFFFF; overflow-y: auto; flex: 1; min-height: 0; font-family: var(--font-body); display: flex; flex-direction: column; width: 100%; position: relative; }
       .hw-statement-modal .hw-modal-actions { flex-shrink: 0; margin-top: 0; background: #F9FAFB; border-top: 1px solid #E5E7EB; padding: 12px 20px; z-index: 10; }
       
-      /* AUTHENTIC EXCEL INVOICE HEADER */
-      .hw-excel-header { background: #FFFFFF; padding: 20px 24px 12px; border-bottom: 2px solid #1E293B; flex-shrink: 0; }
-      .hw-excel-brand-area { display: flex; align-items: flex-start; justify-content: space-between; position: relative; }
-      .hw-excel-logo { display: flex; align-items: center; gap: 8px; flex-shrink: 0; min-width: 100px; }
-      .hw-excel-logo-icon { width: 34px; height: 34px; border-radius: 50%; border: 2.5px solid #DC2626; color: #DC2626; font-weight: 900; font-size: 19px; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); }
-      .hw-excel-logo-text { display: flex; flex-direction: column; line-height: 1; font-family: var(--font-display); }
-      .hw-excel-logo-text span { font-weight: 800; font-size: 14px; color: #DC2626; }
-      .hw-excel-logo-text small { font-size: 9px; color: #475569; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+      /* STATEMENT HEADER (MATCHING THEME) */
+      .hw-statement-banner { background: linear-gradient(135deg, #EA580C 0%, #C2410C 100%); color: #FFFFFF; padding: 18px 24px 14px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 6px; flex-shrink: 0; }
+      .hw-statement-center-header { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
+      .hw-statement-org-title { font-size: 24px; font-weight: 800; font-family: var(--font-display); letter-spacing: 0.5px; margin: 0 0 4px 0; text-transform: uppercase; color: #FFFFFF; text-shadow: 0 1px 2px rgba(0,0,0,0.2); line-height: 1.2; }
+      .hw-statement-org-urdu { font-size: 22px; font-weight: 700; color: #FEF3C7; direction: rtl; font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', 'Segoe UI', serif; margin: 0 0 4px 0; line-height: 1.3; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+      .hw-statement-contact-center { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 14px; font-size: 12.5px; opacity: 0.96; color: #FFF7ED; }
       
-      .hw-excel-main-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 4px; padding: 0 10px; }
-      .hw-excel-org-title { font-size: 24px; font-weight: 900; color: #000000; letter-spacing: 0.5px; text-transform: uppercase; margin: 0; font-family: var(--font-display); line-height: 1.1; }
-      .hw-excel-org-urdu { font-size: 22px; font-weight: 700; color: #000000; direction: rtl; font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', 'Segoe UI', serif; margin: 0; line-height: 1.3; }
-      .hw-excel-line-bold { font-size: 13px; font-weight: 800; color: #000000; }
-      .hw-excel-line-payment { font-size: 12px; font-weight: 800; color: #000000; text-transform: uppercase; letter-spacing: 0.2px; max-width: 680px; }
-      .hw-excel-line-email { font-size: 12.5px; font-weight: 700; color: #000000; }
+      .hw-statement-title-center { text-align: center; padding: 10px 0 4px; background: #FFFFFF; }
+      .hw-statement-doc-title { font-size: 17px; font-weight: 800; color: #1E293B; letter-spacing: 1.5px; text-transform: uppercase; margin: 0; font-family: var(--font-display); }
 
-      .hw-excel-title-bar { text-align: center; margin-top: 14px; padding-top: 8px; }
-      .hw-excel-doc-title { font-size: 18px; font-weight: 900; color: #000000; letter-spacing: 2px; text-transform: uppercase; margin: 0; font-family: var(--font-display); }
+      /* Dedicated Payment Details Bar */
+      .hw-statement-payment-bar { margin: 10px 20px 0; background: #FFF7ED; border: 1.5px dashed #EA580C; border-radius: 7px; padding: 9px 14px; display: flex; align-items: center; gap: 10px; font-size: 12.5px; flex-shrink: 0; }
+      .hw-statement-payment-tag { font-weight: 800; color: #C2410C; font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase; flex-shrink: 0; }
+      .hw-statement-payment-text { font-weight: 700; color: #9A3412; word-break: break-word; }
 
       /* Receiver / Billed-To Block */
       .hw-statement-receiver-block { display: flex; justify-content: space-between; align-items: flex-start; padding: 12px 20px; background: #FAFBFD; border-bottom: 1px solid #E5E7EB; flex-shrink: 0; gap: 16px; }
