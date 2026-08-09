@@ -5048,20 +5048,20 @@ function Style() {
       .hw-statement-card { background: #FFFFFF; overflow-y: auto; flex: 1; min-height: 0; font-family: var(--font-body); display: flex; flex-direction: column; width: 100%; position: relative; }
       .hw-statement-modal .hw-modal-actions { flex-shrink: 0; margin-top: 0; background: #F9FAFB; border-top: 1px solid #E5E7EB; padding: 12px 20px; z-index: 10; }
       
-      /* STATEMENT HEADER (MATCHING THEME) */
-      .hw-statement-banner { background: linear-gradient(135deg, #EA580C 0%, #C2410C 100%); color: #FFFFFF; padding: 18px 24px 14px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 6px; flex-shrink: 0; }
-      .hw-statement-center-header { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
-      .hw-statement-org-title { font-size: 24px; font-weight: 800; font-family: var(--font-display); letter-spacing: 0.5px; margin: 0 0 4px 0; text-transform: uppercase; color: #FFFFFF; text-shadow: 0 1px 2px rgba(0,0,0,0.2); line-height: 1.2; }
-      .hw-statement-org-urdu { font-size: 22px; font-weight: 700; color: #FEF3C7; direction: rtl; font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', 'Segoe UI', serif; margin: 0 0 4px 0; line-height: 1.3; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
-      .hw-statement-contact-center { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 14px; font-size: 12.5px; opacity: 0.96; color: #FFF7ED; }
+      /* STATEMENT HEADER (MATCHING THEME - TRUE CENTER ALIGNED) */
+      .hw-statement-banner { background: linear-gradient(135deg, #EA580C 0%, #C2410C 100%); color: #FFFFFF; padding: 22px 24px 18px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 8px; flex-shrink: 0; width: 100%; box-sizing: border-box; }
+      .hw-statement-center-header { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; width: 100%; margin: 0 auto; }
+      .hw-statement-org-title { font-size: 26px; font-weight: 900; font-family: var(--font-display); letter-spacing: 0.5px; margin: 0 0 6px 0; text-transform: uppercase; color: #FFFFFF; text-shadow: 0 1px 3px rgba(0,0,0,0.25); line-height: 1.2; text-align: center; width: 100%; }
+      .hw-statement-org-urdu { font-size: 24px; font-weight: 700; color: #FEF3C7; direction: rtl; font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', 'Segoe UI', serif; margin: 0 0 6px 0; line-height: 1.3; text-shadow: 0 1px 2px rgba(0,0,0,0.2); text-align: center; width: 100%; }
+      .hw-statement-contact-center { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 16px; font-size: 13px; opacity: 0.98; color: #FFF7ED; text-align: center; width: 100%; }
       
-      .hw-statement-title-center { text-align: center; padding: 10px 0 4px; background: #FFFFFF; }
-      .hw-statement-doc-title { font-size: 17px; font-weight: 800; color: #1E293B; letter-spacing: 1.5px; text-transform: uppercase; margin: 0; font-family: var(--font-display); }
+      .hw-statement-title-center { text-align: center; padding: 14px 20px 6px; background: #FFFFFF; width: 100%; display: flex; justify-content: center; align-items: center; box-sizing: border-box; }
+      .hw-statement-doc-title { font-size: 18px; font-weight: 900; color: #1E293B; letter-spacing: 2px; text-transform: uppercase; margin: 0; font-family: var(--font-display); text-align: center; border-bottom: 2px solid #EA580C; padding-bottom: 4px; display: inline-block; }
 
-      /* Dedicated Payment Details Bar */
-      .hw-statement-payment-bar { margin: 10px 20px 0; background: #FFF7ED; border: 1.5px dashed #EA580C; border-radius: 7px; padding: 9px 14px; display: flex; align-items: center; gap: 10px; font-size: 12.5px; flex-shrink: 0; }
-      .hw-statement-payment-tag { font-weight: 800; color: #C2410C; font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase; flex-shrink: 0; }
-      .hw-statement-payment-text { font-weight: 700; color: #9A3412; word-break: break-word; }
+      /* Dedicated Payment Details Bar - Centered */
+      .hw-statement-payment-bar { margin: 12px 20px 0; background: #FFF7ED; border: 1.5px dashed #EA580C; border-radius: 8px; padding: 10px 16px; display: flex; align-items: center; justify-content: center; text-align: center; gap: 10px; font-size: 13px; flex-shrink: 0; flex-wrap: wrap; box-sizing: border-box; }
+      .hw-statement-payment-tag { font-weight: 800; color: #C2410C; font-size: 11.5px; letter-spacing: 0.5px; text-transform: uppercase; flex-shrink: 0; }
+      .hw-statement-payment-text { font-weight: 700; color: #9A3412; word-break: break-word; text-align: center; }
 
       /* Receiver / Billed-To Block */
       .hw-statement-receiver-block { display: flex; justify-content: space-between; align-items: flex-start; padding: 12px 20px; background: #FAFBFD; border-bottom: 1px solid #E5E7EB; flex-shrink: 0; gap: 16px; }
