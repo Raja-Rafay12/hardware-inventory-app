@@ -4722,22 +4722,17 @@ function SettingsModal({ settings, onClose, onSave }) {
           </div>
 
           {/* Bank Account 1 */}
-          <div style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: 8, padding: "10px 12px" }}>
-            <div style={{ fontSize: "11px", fontWeight: 700, color: "#EA580C", marginBottom: 6, textTransform: "uppercase" }}>Primary Account (JazzCash / EasyPaisa / Bank)</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr 1fr", gap: 8 }}>
-              <Field label="Bank / Wallet">
+          <div style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: 8, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ fontSize: "11px", fontWeight: 700, color: "#EA580C", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              Primary Account (JazzCash / EasyPaisa / Bank)
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <Field label="Bank / Wallet Provider">
                 <select value={bank1Name} onChange={e => { setBank1Name(e.target.value); updateCompiledPayment(e.target.value, bank1Number, bank1Title, bank2Name, bank2Number, bank2Title); }}>
                   {POPULAR_BANKS.map(b => (
                     <option key={b} value={b}>{b}</option>
                   ))}
                 </select>
-              </Field>
-              <Field label="Account / Phone / IBAN">
-                <input 
-                  value={bank1Number} 
-                  onChange={e => { setBank1Number(e.target.value); updateCompiledPayment(bank1Name, e.target.value, bank1Title, bank2Name, bank2Number, bank2Title); }} 
-                  placeholder="e.g. 03461270679" 
-                />
               </Field>
               <Field label="Account Title (optional)">
                 <input 
@@ -4747,25 +4742,27 @@ function SettingsModal({ settings, onClose, onSave }) {
                 />
               </Field>
             </div>
+            <Field label="Account / Phone / IBAN Number">
+              <input 
+                value={bank1Number} 
+                onChange={e => { setBank1Number(e.target.value); updateCompiledPayment(bank1Name, e.target.value, bank1Title, bank2Name, bank2Number, bank2Title); }} 
+                placeholder="e.g. 03461270679" 
+              />
+            </Field>
           </div>
 
           {/* Bank Account 2 */}
-          <div style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: 8, padding: "10px 12px" }}>
-            <div style={{ fontSize: "11px", fontWeight: 700, color: "#475569", marginBottom: 6, textTransform: "uppercase" }}>Secondary Account (Optional - Meezan / Alfalah / etc.)</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr 1fr", gap: 8 }}>
-              <Field label="Bank / Wallet">
+          <div style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: 8, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ fontSize: "11px", fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              Secondary Account (Optional - Meezan / Alfalah / etc.)
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <Field label="Bank / Wallet Provider">
                 <select value={bank2Name} onChange={e => { setBank2Name(e.target.value); updateCompiledPayment(bank1Name, bank1Number, bank1Title, e.target.value, bank2Number, bank2Title); }}>
                   {POPULAR_BANKS.map(b => (
                     <option key={b} value={b}>{b}</option>
                   ))}
                 </select>
-              </Field>
-              <Field label="Account / Phone / IBAN">
-                <input 
-                  value={bank2Number} 
-                  onChange={e => { setBank2Number(e.target.value); updateCompiledPayment(bank1Name, bank1Number, bank1Title, bank2Name, e.target.value, bank2Title); }} 
-                  placeholder="e.g. 0829-010-3838087" 
-                />
               </Field>
               <Field label="Account Title (optional)">
                 <input 
@@ -4775,6 +4772,13 @@ function SettingsModal({ settings, onClose, onSave }) {
                 />
               </Field>
             </div>
+            <Field label="Account / Phone / IBAN Number">
+              <input 
+                value={bank2Number} 
+                onChange={e => { setBank2Number(e.target.value); updateCompiledPayment(bank1Name, bank1Number, bank1Title, bank2Name, e.target.value, bank2Title); }} 
+                placeholder="e.g. 0829-010-3838087" 
+              />
+            </Field>
           </div>
 
           {/* Formatted Statement Preview / Direct Edit */}
