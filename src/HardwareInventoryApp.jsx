@@ -4599,9 +4599,13 @@ const POPULAR_BANKS = [
 
 function SettingsModal({ settings, onClose, onSave }) {
   const [form, setForm] = useState(settings);
-  const [selectedBank, setSelectedBank] = useState("Meezan Bank");
-  const [accNumber, setAccNumber] = useState("");
-  const [accTitle, setAccTitle] = useState("");
+  const [bank1Name, setBank1Name] = useState("JazzCash");
+  const [bank1Number, setBank1Number] = useState("");
+  const [bank1Title, setBank1Title] = useState("");
+  
+  const [bank2Name, setBank2Name] = useState("Meezan Bank");
+  const [bank2Number, setBank2Number] = useState("");
+  const [bank2Title, setBank2Title] = useState("");
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -4619,14 +4623,41 @@ function SettingsModal({ settings, onClose, onSave }) {
     reader.readAsDataURL(file);
   };
 
-  const addBankDetails = () => {
-    if (!accNumber.trim()) return;
-    const formatted = `${selectedBank}: ${accNumber.trim()}${accTitle.trim() ? ` (Title: ${accTitle.trim()})` : ""}`;
-    const current = form.paymentDetails || form.bankDetails || "";
-    const updated = current ? `${current} | ${formatted}` : formatted;
-    set("paymentDetails", updated);
-    set("bankDetails", updated);
-    setAccNumber("");
+  const updateCompiledPayment = (b1N, b1Num, b1T, b2N, b2Num, b2T) => {
+    const parts = [];
+    if (b1Num.trim()) {
+      parts.push(`${b1N.toUpperCase()}: ${b1Num.trim()}${b1T.trim() ? ` ${b1T.trim().toUpperCase()}` : ""}`);
+    }
+    if (b2Num.trim()) {
+      parts.push(`${b2N.toUpperCase()}: ${b2Num.trim()}${b2T.trim() ? ` ${b2T.trim().toUpperCase()}` : ""}`);
+    }
+    if (parts.length > 0) {
+      const compiled = parts.join(". ");
+      set("paymentDetails", compiled);
+      set("bankDetails", compiled);
+    }
+  };
+
+  const handleSave = () => {
+    let finalPayment = form.paymentDetails || form.bankDetails || "";
+    if (bank1Number.trim() || bank2Number.trim()) {
+      const parts = [];
+      if (bank1Number.trim()) {
+        parts.push(`${bank1Name.toUpperCase()}: ${bank1Number.trim()}${bank1Title.trim() ? ` ${bank1Title.trim().toUpperCase()}` : ""}`);
+      }
+      if (bank2Number.trim()) {
+        parts.push(`${bank2Name.toUpperCase()}: ${bank2Number.trim()}${bank2Title.trim() ? ` ${bank2Title.trim().toUpperCase()}` : ""}`);
+      }
+      if (parts.length > 0) {
+        finalPayment = parts.join(". ");
+      }
+    }
+    const finalForm = {
+      ...form,
+      paymentDetails: finalPayment,
+      bankDetails: finalPayment
+    };
+    onSave(finalForm);
   };
 
   return (
@@ -4683,59 +4714,80 @@ function SettingsModal({ settings, onClose, onSave }) {
         <div style={{ gridColumn: "span 2", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 10, padding: "14px 16px", marginTop: 4, display: "flex", flexDirection: "column", gap: 12 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #E2E8F0", paddingBottom: 8 }}>
             <span style={{ fontSize: "12px", fontWeight: 700, color: "#1E293B", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-              🏦 Bank &amp; Payment Details
+              🏦 Online Banking &amp; Payment Accounts
             </span>
             <span style={{ fontSize: "11px", color: "#64748B" }}>
-              Displayed on Invoices &amp; Quotations
+              Shown on Quotations &amp; Invoices
             </span>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <Field label="Select Bank / Mobile Wallet">
-              <select value={selectedBank} onChange={e => setSelectedBank(e.target.value)}>
-                {POPULAR_BANKS.map(b => (
-                  <option key={b} value={b}>{b}</option>
-                ))}
-              </select>
-            </Field>
-
-            <Field label="Account / Phone / IBAN">
-              <input 
-                value={accNumber} 
-                onChange={e => setAccNumber(e.target.value)} 
-                placeholder="e.g. 03461270679" 
-              />
-            </Field>
+          {/* Bank Account 1 */}
+          <div style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: 8, padding: "10px 12px" }}>
+            <div style={{ fontSize: "11px", fontWeight: 700, color: "#EA580C", marginBottom: 6, textTransform: "uppercase" }}>Primary Account (JazzCash / EasyPaisa / Bank)</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr 1fr", gap: 8 }}>
+              <Field label="Bank / Wallet">
+                <select value={bank1Name} onChange={e => { setBank1Name(e.target.value); updateCompiledPayment(e.target.value, bank1Number, bank1Title, bank2Name, bank2Number, bank2Title); }}>
+                  {POPULAR_BANKS.map(b => (
+                    <option key={b} value={b}>{b}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Account / Phone / IBAN">
+                <input 
+                  value={bank1Number} 
+                  onChange={e => { setBank1Number(e.target.value); updateCompiledPayment(bank1Name, e.target.value, bank1Title, bank2Name, bank2Number, bank2Title); }} 
+                  placeholder="e.g. 03461270679" 
+                />
+              </Field>
+              <Field label="Account Title (optional)">
+                <input 
+                  value={bank1Title} 
+                  onChange={e => { setBank1Title(e.target.value); updateCompiledPayment(bank1Name, bank1Number, e.target.value, bank2Name, bank2Number, bank2Title); }} 
+                  placeholder="e.g. Raja Shahid" 
+                />
+              </Field>
+            </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 10, alignItems: "flex-end" }}>
-            <Field label="Account Title (optional)">
-              <input 
-                value={accTitle} 
-                onChange={e => setAccTitle(e.target.value)} 
-                placeholder="e.g. Raja Rafay" 
-              />
-            </Field>
-            <button 
-              type="button" 
-              className="hw-btn-accent" 
-              onClick={addBankDetails} 
-              style={{ height: 38, padding: "0 16px", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 6 }}
-            >
-              + Add Account
-            </button>
+          {/* Bank Account 2 */}
+          <div style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: 8, padding: "10px 12px" }}>
+            <div style={{ fontSize: "11px", fontWeight: 700, color: "#475569", marginBottom: 6, textTransform: "uppercase" }}>Secondary Account (Optional - Meezan / Alfalah / etc.)</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr 1fr", gap: 8 }}>
+              <Field label="Bank / Wallet">
+                <select value={bank2Name} onChange={e => { setBank2Name(e.target.value); updateCompiledPayment(bank1Name, bank1Number, bank1Title, e.target.value, bank2Number, bank2Title); }}>
+                  {POPULAR_BANKS.map(b => (
+                    <option key={b} value={b}>{b}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Account / Phone / IBAN">
+                <input 
+                  value={bank2Number} 
+                  onChange={e => { setBank2Number(e.target.value); updateCompiledPayment(bank1Name, bank1Number, bank1Title, bank2Name, e.target.value, bank2Title); }} 
+                  placeholder="e.g. 0829-010-3838087" 
+                />
+              </Field>
+              <Field label="Account Title (optional)">
+                <input 
+                  value={bank2Title} 
+                  onChange={e => { setBank2Title(e.target.value); updateCompiledPayment(bank1Name, bank1Number, bank1Title, bank2Name, bank2Number, e.target.value); }} 
+                  placeholder="e.g. Capital Hardware" 
+                />
+              </Field>
+            </div>
           </div>
 
+          {/* Formatted Statement Preview / Direct Edit */}
           <div style={{ borderTop: "1px dashed #CBD5E1", paddingTop: 10 }}>
-            <Field label="Payment Details Line (Shown on Statement)">
+            <Field label="Payment Line Preview (Customizable)">
               <input 
                 value={form.paymentDetails || form.bankDetails || ""} 
                 onChange={e => { set("paymentDetails", e.target.value); set("bankDetails", e.target.value); }} 
-                placeholder="e.g. Meezan Bank: 03461270679 (Title: ABC) | JazzCash: 03328898666" 
-                style={{ background: "#FFFFFF", fontWeight: 500 }}
+                placeholder="e.g. JAZZ CASH: 0307-8898663 RAJA SHAHID. MEEZAN BANK: 0829-010-3838087 CAPITAL HARDWARE" 
+                style={{ background: "#FFFFFF", fontWeight: 600, color: "#0F172A" }}
               />
               <span className="hw-hint" style={{ marginTop: 4 }}>
-                This is the exact line shown in the payment details bar on your invoices &amp; estimates.
+                This is the exact line printed between telephone and email on your statements.
               </span>
             </Field>
           </div>
@@ -4758,7 +4810,7 @@ function SettingsModal({ settings, onClose, onSave }) {
       <div className="hw-modal-actions" style={{ marginTop: 20 }}>
         <div style={{ flex: 1 }} />
         <button className="hw-btn-ghost" onClick={onClose}>Cancel</button>
-        <button className="hw-btn-accent" onClick={() => onSave(form)}><Save size={14} /> Save settings</button>
+        <button className="hw-btn-accent" onClick={handleSave}><Save size={14} /> Save settings</button>
       </div>
     </ModalShell>
   );
