@@ -175,6 +175,9 @@ async function runMigrations() {
       await client.query('ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS payment_details TEXT DEFAULT \'\'');
       await client.query('ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS bank_details TEXT DEFAULT \'\'');
       await client.query('ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS address TEXT DEFAULT \'\'');
+      await client.query('ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS logo_url TEXT DEFAULT \'\'');
+      await client.query('ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS quotation_title VARCHAR(100) DEFAULT \'MATERIAL REQUEST\'');
+      await client.query('ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS invoice_title VARCHAR(100) DEFAULT \'TAX INVOICE\'');
       console.log("Database schema updates verified successfully.");
     } finally {
       client.release();
@@ -460,6 +463,9 @@ ipcMain.handle('db:fetch-data', async () => {
       paymentDetails: dbSettings.payment_details || dbSettings.bank_details || '',
       bankDetails: dbSettings.bank_details || dbSettings.payment_details || '',
       address: dbSettings.address || '',
+      logoUrl: dbSettings.logo_url || '',
+      quotationTitle: dbSettings.quotation_title || 'MATERIAL REQUEST',
+      invoiceTitle: dbSettings.invoice_title || 'TAX INVOICE',
       currencySymbol: dbSettings.currency_symbol,
       invoiceCounter: dbSettings.invoice_counter,
       lowStockDefault: dbSettings.low_stock_default
@@ -640,8 +646,8 @@ ipcMain.handle('db:save-settings', async (event, settings) => {
   try {
     const paymentInfo = settings.paymentDetails || settings.bankDetails || '';
     await pool.query(
-      `INSERT INTO public.settings (user_id, shop_name, shop_name_urdu, phone, email, whatsapp, payment_details, bank_details, address, currency_symbol, invoice_counter, low_stock_default)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      `INSERT INTO public.settings (user_id, shop_name, shop_name_urdu, phone, email, whatsapp, payment_details, bank_details, address, logo_url, quotation_title, invoice_title, currency_symbol, invoice_counter, low_stock_default)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
        ON CONFLICT (user_id) 
        DO UPDATE SET 
          shop_name = $2, 
@@ -652,10 +658,13 @@ ipcMain.handle('db:save-settings', async (event, settings) => {
          payment_details = $7,
          bank_details = $8, 
          address = $9, 
-         currency_symbol = $10, 
-         invoice_counter = $11, 
-         low_stock_default = $12`,
-      [currentUserId, settings.shopName, settings.shopNameUrdu || '', settings.phone || '', settings.email || '', settings.whatsapp || '', paymentInfo, paymentInfo, settings.address || '', settings.currencySymbol, settings.invoiceCounter, settings.lowStockDefault]
+         logo_url = $10,
+         quotation_title = $11,
+         invoice_title = $12,
+         currency_symbol = $13, 
+         invoice_counter = $14, 
+         low_stock_default = $15`,
+      [currentUserId, settings.shopName, settings.shopNameUrdu || '', settings.phone || '', settings.email || '', settings.whatsapp || '', paymentInfo, paymentInfo, settings.address || '', settings.logoUrl || '', settings.quotationTitle || 'MATERIAL REQUEST', settings.invoiceTitle || 'TAX INVOICE', settings.currencySymbol, settings.invoiceCounter, settings.lowStockDefault]
     );
     // Also update phone on user record if provided
     if (settings.phone) {

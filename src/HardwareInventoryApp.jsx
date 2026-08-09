@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Package, Receipt, FileClock, Plus, Minus, Trash2,
   Search, X, Printer, AlertTriangle, Save, ChevronRight, ChevronLeft, Pencil,
   ShoppingCart, Settings as SettingsIcon, ArrowUpCircle, ArrowDownCircle,
-  Check, Loader2, Wallet, CalendarDays, LogOut
+  Check, Loader2, Wallet, CalendarDays, LogOut, Upload
 } from "lucide-react";
 import * as XLSX from "xlsx";
 
@@ -54,14 +54,17 @@ const fmtDayLabel = (key) => {
 };
 
 const DEFAULT_SETTINGS = { 
-  shopName: "CAPITAL HARDWARE TRADING", 
-  shopNameUrdu: "کیپیٹل ہارڈ و ئیر ٹریڈنگ",
-  phone: "0332-8898666",
-  email: "capitaalht@gmail.com",
-  whatsapp: "0332-8898666",
-  paymentDetails: "JAZZ CASH: 0307-8898663 RAJA SHAHID. MEEZAN BANK: 0829-010-3838087 CAPITAL HARDWARE",
-  bankDetails: "JAZZ CASH: 0307-8898663 RAJA SHAHID. MEEZAN BANK: 0829-010-3838087 CAPITAL HARDWARE",
-  address: "I-16 Islamabad",
+  shopName: "My Organization", 
+  shopNameUrdu: "",
+  phone: "",
+  email: "",
+  whatsapp: "",
+  paymentDetails: "",
+  bankDetails: "",
+  address: "",
+  logoUrl: "",
+  quotationTitle: "MATERIAL REQUEST",
+  invoiceTitle: "TAX INVOICE",
   currencySymbol: "Rs ", 
   invoiceCounter: 1, 
   lowStockDefault: 5 
@@ -3831,41 +3834,43 @@ Thank you!`;
     <div className="hw-modal-overlay" onClick={onClose}>
       <div className="hw-modal hw-statement-modal" onClick={e => e.stopPropagation()}>
         <div className="hw-statement-card" id="hw-print-area">
-          {/* Authentic Excel Style Header Matching Shared Template */}
+          {/* Customizable Statement Header */}
           <div className="hw-excel-header">
-            {/* Logo Badge on Top-Left */}
-            <div className="hw-excel-logo-badge">
-              <svg width="40" height="40" viewBox="0 0 50 50" style={{ overflow: "visible" }}>
-                <path d="M 12 30 A 18 18 0 1 1 38 14" fill="none" stroke="#DC2626" strokeWidth="3" strokeLinecap="round" />
-                <circle cx="38" cy="14" r="2.5" fill="#DC2626" />
-                <text x="25" y="32" fontSize="19" fontWeight="900" fill="#DC2626" textAnchor="middle" fontFamily="sans-serif">C</text>
-              </svg>
-              <div className="hw-excel-logo-label">
-                <span style={{ color: "#DC2626", fontWeight: 900, fontSize: "13.5px", lineHeight: "1" }}>Capital</span>
-                <small style={{ color: "#475569", fontSize: "8.5px", letterSpacing: "2.5px", textTransform: "uppercase", fontWeight: 700 }}>Hardware</small>
+            {/* Custom Uploaded Logo (Only shown if uploaded in Settings) */}
+            {settings.logoUrl && (
+              <div className="hw-excel-logo-badge">
+                <img src={settings.logoUrl} alt="Logo" style={{ maxHeight: 52, maxWidth: 110, objectFit: "contain" }} />
               </div>
-            </div>
+            )}
 
-            {/* Main Centered Business Details */}
+            {/* Main Centered Business Details (100% Dynamic from Settings) */}
             <div className="hw-excel-main-center">
-              <h1 className="hw-excel-org-title">{settings.shopName || "CAPITAL HARDWARE TRADING"}</h1>
+              {settings.shopName && <h1 className="hw-excel-org-title">{settings.shopName}</h1>}
               {settings.shopNameUrdu && (
                 <div className="hw-excel-org-urdu">{settings.shopNameUrdu}</div>
               )}
-              <div className="hw-excel-line-bold">
-                Tel: {settings.phone || "0332-8898666"} {settings.address ? ` ${settings.address}` : " I-16 Islamabad"}
-              </div>
-              <div className="hw-excel-line-payment">
-                {settings.paymentDetails || settings.bankDetails || "JAZZ CASH: 0307-8898663 RAJA SHAHID. MEEZAN BANK: 0829-010-3838087 CAPITAL HARDWARE"}
-              </div>
-              <div className="hw-excel-line-email">
-                E-mail: {settings.email || "capitaalht@gmail.com"}
-              </div>
+              {(settings.phone || settings.address) && (
+                <div className="hw-excel-line-bold">
+                  {settings.phone && <span>Tel: {settings.phone}</span>}
+                  {settings.phone && settings.address && <span> · </span>}
+                  {settings.address && <span>{settings.address}</span>}
+                </div>
+              )}
+              {(settings.paymentDetails || settings.bankDetails) && (
+                <div className="hw-excel-line-payment">
+                  {settings.paymentDetails || settings.bankDetails}
+                </div>
+              )}
+              {settings.email && (
+                <div className="hw-excel-line-email">
+                  E-mail: {settings.email}
+                </div>
+              )}
             </div>
 
             {/* Centered Document Title */}
             <div className="hw-excel-title-bar">
-              <h2 className="hw-excel-doc-title">MATERIAL REQUEST</h2>
+              <h2 className="hw-excel-doc-title">{settings.quotationTitle || "MATERIAL REQUEST"}</h2>
             </div>
           </div>
 
@@ -4401,41 +4406,43 @@ Thank you for your business!`;
     <div className="hw-modal-overlay" onClick={onClose}>
       <div className="hw-modal hw-statement-modal" onClick={e => e.stopPropagation()}>
         <div className="hw-statement-card" id="hw-print-area">
-          {/* Authentic Excel Style Header Matching Shared Template */}
+          {/* Customizable Statement Header */}
           <div className="hw-excel-header">
-            {/* Logo Badge on Top-Left */}
-            <div className="hw-excel-logo-badge">
-              <svg width="40" height="40" viewBox="0 0 50 50" style={{ overflow: "visible" }}>
-                <path d="M 12 30 A 18 18 0 1 1 38 14" fill="none" stroke="#DC2626" strokeWidth="3" strokeLinecap="round" />
-                <circle cx="38" cy="14" r="2.5" fill="#DC2626" />
-                <text x="25" y="32" fontSize="19" fontWeight="900" fill="#DC2626" textAnchor="middle" fontFamily="sans-serif">C</text>
-              </svg>
-              <div className="hw-excel-logo-label">
-                <span style={{ color: "#DC2626", fontWeight: 900, fontSize: "13.5px", lineHeight: "1" }}>Capital</span>
-                <small style={{ color: "#475569", fontSize: "8.5px", letterSpacing: "2.5px", textTransform: "uppercase", fontWeight: 700 }}>Hardware</small>
+            {/* Custom Uploaded Logo (Only shown if uploaded in Settings) */}
+            {settings.logoUrl && (
+              <div className="hw-excel-logo-badge">
+                <img src={settings.logoUrl} alt="Logo" style={{ maxHeight: 52, maxWidth: 110, objectFit: "contain" }} />
               </div>
-            </div>
+            )}
 
-            {/* Main Centered Business Details */}
+            {/* Main Centered Business Details (100% Dynamic from Settings) */}
             <div className="hw-excel-main-center">
-              <h1 className="hw-excel-org-title">{settings.shopName || "CAPITAL HARDWARE TRADING"}</h1>
+              {settings.shopName && <h1 className="hw-excel-org-title">{settings.shopName}</h1>}
               {settings.shopNameUrdu && (
                 <div className="hw-excel-org-urdu">{settings.shopNameUrdu}</div>
               )}
-              <div className="hw-excel-line-bold">
-                Tel: {settings.phone || "0332-8898666"} {settings.address ? ` ${settings.address}` : " I-16 Islamabad"}
-              </div>
-              <div className="hw-excel-line-payment">
-                {settings.paymentDetails || settings.bankDetails || "JAZZ CASH: 0307-8898663 RAJA SHAHID. MEEZAN BANK: 0829-010-3838087 CAPITAL HARDWARE"}
-              </div>
-              <div className="hw-excel-line-email">
-                E-mail: {settings.email || "capitaalht@gmail.com"}
-              </div>
+              {(settings.phone || settings.address) && (
+                <div className="hw-excel-line-bold">
+                  {settings.phone && <span>Tel: {settings.phone}</span>}
+                  {settings.phone && settings.address && <span> · </span>}
+                  {settings.address && <span>{settings.address}</span>}
+                </div>
+              )}
+              {(settings.paymentDetails || settings.bankDetails) && (
+                <div className="hw-excel-line-payment">
+                  {settings.paymentDetails || settings.bankDetails}
+                </div>
+              )}
+              {settings.email && (
+                <div className="hw-excel-line-email">
+                  E-mail: {settings.email}
+                </div>
+              )}
             </div>
 
             {/* Centered Document Title */}
             <div className="hw-excel-title-bar">
-              <h2 className="hw-excel-doc-title">TAX INVOICE / CASH MEMO</h2>
+              <h2 className="hw-excel-doc-title">{settings.invoiceTitle || "TAX INVOICE"}</h2>
             </div>
           </div>
 
@@ -4598,6 +4605,20 @@ function SettingsModal({ settings, onClose, onSave }) {
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
+  const handleLogoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Please select an image smaller than 2MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      set("logoUrl", ev.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const addBankDetails = () => {
     if (!accNumber.trim()) return;
     const formatted = `${selectedBank}: ${accNumber.trim()}${accTitle.trim() ? ` (Title: ${accTitle.trim()})` : ""}`;
@@ -4611,6 +4632,34 @@ function SettingsModal({ settings, onClose, onSave }) {
   return (
     <ModalShell onClose={onClose} title="Organization & Profile Settings">
       <div className="hw-form-grid">
+        {/* Custom Logo Upload Option */}
+        <div style={{ gridColumn: "span 2", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 10, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {form.logoUrl ? (
+              <img src={form.logoUrl} alt="Logo" style={{ width: 50, height: 50, objectFit: "contain", borderRadius: 8, border: "1px solid #CBD5E1", background: "#FFFFFF" }} />
+            ) : (
+              <div style={{ width: 50, height: 50, borderRadius: 8, border: "1.5px dashed #94A3B8", display: "flex", alignItems: "center", justifyContent: "center", color: "#94A3B8", fontSize: "11px", fontWeight: 600, background: "#FFFFFF" }}>
+                No Logo
+              </div>
+            )}
+            <div>
+              <div style={{ fontSize: "13px", fontWeight: 700, color: "#1E293B" }}>Custom Organization Logo</div>
+              <div style={{ fontSize: "11.5px", color: "#64748B" }}>Upload your logo to appear on Quotations &amp; Invoices.</div>
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <label className="hw-btn-accent" style={{ height: 34, padding: "0 12px", cursor: "pointer", fontSize: "12px", display: "inline-flex", alignItems: "center", gap: 6 }}>
+              <Upload size={13} /> {form.logoUrl ? "Change Logo" : "Upload Logo"}
+              <input type="file" accept="image/*" onChange={handleLogoUpload} style={{ display: "none" }} />
+            </label>
+            {form.logoUrl && (
+              <button type="button" className="hw-btn-ghost" onClick={() => set("logoUrl", "")} style={{ height: 34, padding: "0 10px", fontSize: "12px", color: "#DC2626" }}>
+                Remove
+              </button>
+            )}
+          </div>
+        </div>
+
         <Field label="Organization / English Name">
           <input value={form.shopName || ""} onChange={e => set("shopName", e.target.value)} placeholder="e.g. CAPITAL HARDWARE TRADING" />
         </Field>
@@ -4691,6 +4740,13 @@ function SettingsModal({ settings, onClose, onSave }) {
             </Field>
           </div>
         </div>
+
+        <Field label="Quotation Document Heading">
+          <input value={form.quotationTitle || ""} onChange={e => set("quotationTitle", e.target.value)} placeholder="e.g. MATERIAL REQUEST" />
+        </Field>
+        <Field label="Invoice Document Heading">
+          <input value={form.invoiceTitle || ""} onChange={e => set("invoiceTitle", e.target.value)} placeholder="e.g. TAX INVOICE" />
+        </Field>
 
         <Field label="Currency symbol">
           <input value={form.currencySymbol || ""} onChange={e => set("currencySymbol", e.target.value)} maxLength={6} />
