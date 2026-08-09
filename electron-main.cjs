@@ -168,6 +168,7 @@ async function runMigrations() {
       await client.query('ALTER TABLE public.invoices ADD COLUMN IF NOT EXISTS customer_email VARCHAR(255) DEFAULT \'\'');
       await client.query('ALTER TABLE public.invoices ADD COLUMN IF NOT EXISTS customer_phone VARCHAR(50) DEFAULT \'\'');
       await client.query('ALTER TABLE public.users ADD COLUMN IF NOT EXISTS phone VARCHAR(50) DEFAULT \'\'');
+      await client.query('ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS shop_name_urdu VARCHAR(255) DEFAULT \'\'');
       await client.query('ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS phone VARCHAR(50) DEFAULT \'\'');
       await client.query('ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS email VARCHAR(255) DEFAULT \'\'');
       await client.query('ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS whatsapp VARCHAR(50) DEFAULT \'\'');
@@ -452,6 +453,7 @@ ipcMain.handle('db:fetch-data', async () => {
     const dbSettings = settingsResult.rows[0];
     const settings = dbSettings ? {
       shopName: dbSettings.shop_name,
+      shopNameUrdu: dbSettings.shop_name_urdu || '',
       phone: dbSettings.phone || '',
       email: dbSettings.email || '',
       whatsapp: dbSettings.whatsapp || '',
@@ -638,21 +640,22 @@ ipcMain.handle('db:save-settings', async (event, settings) => {
   try {
     const paymentInfo = settings.paymentDetails || settings.bankDetails || '';
     await pool.query(
-      `INSERT INTO public.settings (user_id, shop_name, phone, email, whatsapp, payment_details, bank_details, address, currency_symbol, invoice_counter, low_stock_default)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      `INSERT INTO public.settings (user_id, shop_name, shop_name_urdu, phone, email, whatsapp, payment_details, bank_details, address, currency_symbol, invoice_counter, low_stock_default)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        ON CONFLICT (user_id) 
        DO UPDATE SET 
          shop_name = $2, 
-         phone = $3, 
-         email = $4,
-         whatsapp = $5, 
-         payment_details = $6,
-         bank_details = $7, 
-         address = $8, 
-         currency_symbol = $9, 
-         invoice_counter = $10, 
-         low_stock_default = $11`,
-      [currentUserId, settings.shopName, settings.phone || '', settings.email || '', settings.whatsapp || '', paymentInfo, paymentInfo, settings.address || '', settings.currencySymbol, settings.invoiceCounter, settings.lowStockDefault]
+         shop_name_urdu = $3,
+         phone = $4, 
+         email = $5,
+         whatsapp = $6, 
+         payment_details = $7,
+         bank_details = $8, 
+         address = $9, 
+         currency_symbol = $10, 
+         invoice_counter = $11, 
+         low_stock_default = $12`,
+      [currentUserId, settings.shopName, settings.shopNameUrdu || '', settings.phone || '', settings.email || '', settings.whatsapp || '', paymentInfo, paymentInfo, settings.address || '', settings.currencySymbol, settings.invoiceCounter, settings.lowStockDefault]
     );
     // Also update phone on user record if provided
     if (settings.phone) {

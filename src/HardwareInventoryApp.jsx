@@ -54,13 +54,14 @@ const fmtDayLabel = (key) => {
 };
 
 const DEFAULT_SETTINGS = { 
-  shopName: "My Hardware Shop", 
-  phone: "",
-  email: "",
-  whatsapp: "",
-  paymentDetails: "",
-  bankDetails: "",
-  address: "",
+  shopName: "CAPITAL HARDWARE TRADING", 
+  shopNameUrdu: "کیپیٹل ہارڈ و ئیر ٹریڈنگ",
+  phone: "0332-8898666",
+  email: "capitaalht@gmail.com",
+  whatsapp: "0332-8898666",
+  paymentDetails: "JAZZ CASH: 0307-8898663 RAJA SHAHID. MEEZAN BANK: 0829-010-3838087 CAPITAL HARDWARE",
+  bankDetails: "JAZZ CASH: 0307-8898663 RAJA SHAHID. MEEZAN BANK: 0829-010-3838087 CAPITAL HARDWARE",
+  address: "I-16 Islamabad",
   currencySymbol: "Rs ", 
   invoiceCounter: 1, 
   lowStockDefault: 5 
@@ -3830,26 +3831,50 @@ Thank you!`;
     <div className="hw-modal-overlay" onClick={onClose}>
       <div className="hw-modal hw-statement-modal" onClick={e => e.stopPropagation()}>
         <div className="hw-statement-card" id="hw-print-area">
-          {/* Header Banner - Centered Big & Bold Organization Name */}
-          <div className="hw-statement-banner">
-            <div className="hw-statement-type-corner">
-              <span className="hw-statement-type-pill">ESTIMATE</span>
-            </div>
-            <div className="hw-statement-center-header">
-              <h1 className="hw-statement-org-title">{settings.shopName || "MY ORGANIZATION"}</h1>
-              <div className="hw-statement-contact-center">
-                {settings.phone && <span>📞 Phone: <strong>{settings.phone}</strong></span>}
-                {settings.email && <span>✉️ Email: <strong>{settings.email}</strong></span>}
-                {settings.whatsapp && <span>💬 WhatsApp: <strong>{settings.whatsapp}</strong></span>}
-                {settings.address && <span>📍 {settings.address}</span>}
+          {/* Authentic Excel Style Header */}
+          <div className="hw-excel-header">
+            <div className="hw-excel-brand-area">
+              {/* Logo / Brand badge on left */}
+              <div className="hw-excel-logo">
+                <div className="hw-excel-logo-icon">C</div>
+                <div className="hw-excel-logo-text">
+                  <span>Capital</span>
+                  <small>Hardware</small>
+                </div>
               </div>
+
+              {/* Main Centered Organization Info */}
+              <div className="hw-excel-main-center">
+                <h1 className="hw-excel-org-title">{settings.shopName || "CAPITAL HARDWARE TRADING"}</h1>
+                {settings.shopNameUrdu && (
+                  <div className="hw-excel-org-urdu">{settings.shopNameUrdu}</div>
+                )}
+                <div className="hw-excel-line-bold">
+                  Tel: {settings.phone || "0332-8898666"} {settings.address && <span> · {settings.address}</span>}
+                </div>
+                {(settings.paymentDetails || settings.bankDetails) && (
+                  <div className="hw-excel-line-payment">
+                    {settings.paymentDetails || settings.bankDetails}
+                  </div>
+                )}
+                {settings.email && (
+                  <div className="hw-excel-line-email">
+                    E-mail: {settings.email}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Centered Document Title */}
+            <div className="hw-excel-title-bar">
+              <h2 className="hw-excel-doc-title">MATERIAL REQUEST</h2>
             </div>
           </div>
 
           {/* Receiver / Billed-To Info Block */}
           <div className="hw-statement-receiver-block">
             <div className="hw-statement-receiver-info">
-              <div className="hw-statement-section-label">BILL TO / RECEIVER:</div>
+              <div className="hw-statement-section-label">M/S &amp; CLIENT DETAILS:</div>
               <div className="hw-statement-customer-name">{quote.customerName || "Walk-in Customer"}</div>
               {quote.customerPhone && <div className="hw-statement-customer-sub">📞 Phone: <strong>{quote.customerPhone}</strong></div>}
               {quote.customerEmail && <div className="hw-statement-customer-sub">✉️ Email: {quote.customerEmail}</div>}
@@ -3869,14 +3894,6 @@ Thank you!`;
               </div>
             </div>
           </div>
-
-          {/* Dedicated Payment Details Bar */}
-          {(settings.paymentDetails || settings.bankDetails) && (
-            <div className="hw-statement-payment-bar">
-              <span className="hw-statement-payment-tag">💳 PAYMENT DETAILS</span>
-              <span className="hw-statement-payment-text">{settings.paymentDetails || settings.bankDetails}</span>
-            </div>
-          )}
 
           {/* Summary Box */}
           <div className="hw-statement-summary-box">
@@ -4386,26 +4403,50 @@ Thank you for your business!`;
     <div className="hw-modal-overlay" onClick={onClose}>
       <div className="hw-modal hw-statement-modal" onClick={e => e.stopPropagation()}>
         <div className="hw-statement-card" id="hw-print-area">
-          {/* Header Banner - Centered Big & Bold Organization Name */}
-          <div className="hw-statement-banner">
-            <div className="hw-statement-type-corner">
-              <span className="hw-statement-type-pill">TAX INVOICE</span>
-            </div>
-            <div className="hw-statement-center-header">
-              <h1 className="hw-statement-org-title">{settings.shopName || "MY ORGANIZATION"}</h1>
-              <div className="hw-statement-contact-center">
-                {settings.phone && <span>📞 Phone: <strong>{settings.phone}</strong></span>}
-                {settings.email && <span>✉️ Email: <strong>{settings.email}</strong></span>}
-                {settings.whatsapp && <span>💬 WhatsApp: <strong>{settings.whatsapp}</strong></span>}
-                {settings.address && <span>📍 {settings.address}</span>}
+          {/* Authentic Excel Style Header */}
+          <div className="hw-excel-header">
+            <div className="hw-excel-brand-area">
+              {/* Logo / Brand badge on left */}
+              <div className="hw-excel-logo">
+                <div className="hw-excel-logo-icon">C</div>
+                <div className="hw-excel-logo-text">
+                  <span>Capital</span>
+                  <small>Hardware</small>
+                </div>
               </div>
+
+              {/* Main Centered Organization Info */}
+              <div className="hw-excel-main-center">
+                <h1 className="hw-excel-org-title">{settings.shopName || "CAPITAL HARDWARE TRADING"}</h1>
+                {settings.shopNameUrdu && (
+                  <div className="hw-excel-org-urdu">{settings.shopNameUrdu}</div>
+                )}
+                <div className="hw-excel-line-bold">
+                  Tel: {settings.phone || "0332-8898666"} {settings.address && <span> · {settings.address}</span>}
+                </div>
+                {(settings.paymentDetails || settings.bankDetails) && (
+                  <div className="hw-excel-line-payment">
+                    {settings.paymentDetails || settings.bankDetails}
+                  </div>
+                )}
+                {settings.email && (
+                  <div className="hw-excel-line-email">
+                    E-mail: {settings.email}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Centered Document Title */}
+            <div className="hw-excel-title-bar">
+              <h2 className="hw-excel-doc-title">SALES INVOICE / CASH MEMO</h2>
             </div>
           </div>
 
           {/* Receiver / Billed-To Info Block */}
           <div className="hw-statement-receiver-block">
             <div className="hw-statement-receiver-info">
-              <div className="hw-statement-section-label">BILL TO / RECEIVER:</div>
+              <div className="hw-statement-section-label">M/S &amp; CLIENT DETAILS:</div>
               <div className="hw-statement-customer-name">{invoice.customerName || "Walk-in Customer"}</div>
               {invoice.customerPhone && <div className="hw-statement-customer-sub">📞 Phone: <strong>{invoice.customerPhone}</strong></div>}
               {invoice.customerEmail && <div className="hw-statement-customer-sub">✉️ Email: {invoice.customerEmail}</div>}
@@ -4425,14 +4466,6 @@ Thank you for your business!`;
               </div>
             </div>
           </div>
-
-          {/* Dedicated Payment Details Bar */}
-          {(settings.paymentDetails || settings.bankDetails) && (
-            <div className="hw-statement-payment-bar">
-              <span className="hw-statement-payment-tag">💳 PAYMENT DETAILS</span>
-              <span className="hw-statement-payment-text">{settings.paymentDetails || settings.bankDetails}</span>
-            </div>
-          )}
 
           {/* Summary Box */}
           <div className="hw-statement-summary-box">
@@ -4582,20 +4615,23 @@ function SettingsModal({ settings, onClose, onSave }) {
   return (
     <ModalShell onClose={onClose} title="Organization & Profile Settings">
       <div className="hw-form-grid">
-        <Field label="Organization / Business Name" span={2}>
-          <input value={form.shopName || ""} onChange={e => set("shopName", e.target.value)} placeholder="e.g. ABC Hardware & Electricals" />
+        <Field label="Organization / English Name">
+          <input value={form.shopName || ""} onChange={e => set("shopName", e.target.value)} placeholder="e.g. CAPITAL HARDWARE TRADING" />
+        </Field>
+        <Field label="Urdu Name (Optional)">
+          <input value={form.shopNameUrdu || ""} onChange={e => set("shopNameUrdu", e.target.value)} placeholder="e.g. کیپیٹل ہارڈ و ئیر ٹریڈنگ" style={{ direction: "rtl", fontFamily: "serif" }} />
         </Field>
         <Field label="Phone Number">
           <input value={form.phone || ""} onChange={e => set("phone", e.target.value)} placeholder="e.g. 0332-8898666" />
         </Field>
         <Field label="Email Address">
-          <input value={form.email || ""} onChange={e => set("email", e.target.value)} placeholder="e.g. info@organization.com" />
+          <input value={form.email || ""} onChange={e => set("email", e.target.value)} placeholder="e.g. capitaalht@gmail.com" />
         </Field>
         <Field label="WhatsApp Number">
           <input value={form.whatsapp || ""} onChange={e => set("whatsapp", e.target.value)} placeholder="e.g. 0332-8898666" />
         </Field>
         <Field label="Shop Address / Location">
-          <input value={form.address || ""} onChange={e => set("address", e.target.value)} placeholder="e.g. Main Market, Shop #12" />
+          <input value={form.address || ""} onChange={e => set("address", e.target.value)} placeholder="e.g. I-16 Islamabad" />
         </Field>
 
         {/* Single Unified Professional Bank & Payment Details Container */}
@@ -5034,13 +5070,24 @@ function Style() {
       .hw-statement-card { background: #FFFFFF; overflow-y: auto; flex: 1; min-height: 0; font-family: var(--font-body); display: flex; flex-direction: column; width: 100%; position: relative; }
       .hw-statement-modal .hw-modal-actions { flex-shrink: 0; margin-top: 0; background: #F9FAFB; border-top: 1px solid #E5E7EB; padding: 12px 20px; z-index: 10; }
       
-      /* Orange Top Banner (Centered Big & Bold Organization Name) */
-      .hw-statement-banner { background: #EA580C; color: #FFFFFF; padding: 16px 20px 14px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 6px; flex-shrink: 0; }
-      .hw-statement-type-corner { position: absolute; top: 12px; right: 16px; }
-      .hw-statement-type-pill { background: #FFFFFF; color: #EA580C; font-weight: 800; font-size: 10.5px; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-      .hw-statement-center-header { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
-      .hw-statement-org-title { font-size: 24px; font-weight: 800; font-family: var(--font-display); letter-spacing: -0.3px; margin: 0 0 4px 0; text-transform: uppercase; color: #FFFFFF; text-shadow: 0 1px 2px rgba(0,0,0,0.15); line-height: 1.2; }
-      .hw-statement-contact-center { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 14px; font-size: 12px; opacity: 0.95; }
+      /* AUTHENTIC EXCEL INVOICE HEADER */
+      .hw-excel-header { background: #FFFFFF; padding: 20px 24px 12px; border-bottom: 2px solid #1E293B; flex-shrink: 0; }
+      .hw-excel-brand-area { display: flex; align-items: flex-start; justify-content: space-between; position: relative; }
+      .hw-excel-logo { display: flex; align-items: center; gap: 8px; flex-shrink: 0; min-width: 100px; }
+      .hw-excel-logo-icon { width: 34px; height: 34px; border-radius: 50%; border: 2.5px solid #DC2626; color: #DC2626; font-weight: 900; font-size: 19px; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); }
+      .hw-excel-logo-text { display: flex; flex-direction: column; line-height: 1; font-family: var(--font-display); }
+      .hw-excel-logo-text span { font-weight: 800; font-size: 14px; color: #DC2626; }
+      .hw-excel-logo-text small { font-size: 9px; color: #475569; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+      
+      .hw-excel-main-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 4px; padding: 0 10px; }
+      .hw-excel-org-title { font-size: 24px; font-weight: 900; color: #000000; letter-spacing: 0.5px; text-transform: uppercase; margin: 0; font-family: var(--font-display); line-height: 1.1; }
+      .hw-excel-org-urdu { font-size: 22px; font-weight: 700; color: #000000; direction: rtl; font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', 'Segoe UI', serif; margin: 0; line-height: 1.3; }
+      .hw-excel-line-bold { font-size: 13px; font-weight: 800; color: #000000; }
+      .hw-excel-line-payment { font-size: 12px; font-weight: 800; color: #000000; text-transform: uppercase; letter-spacing: 0.2px; max-width: 680px; }
+      .hw-excel-line-email { font-size: 12.5px; font-weight: 700; color: #000000; }
+
+      .hw-excel-title-bar { text-align: center; margin-top: 14px; padding-top: 8px; }
+      .hw-excel-doc-title { font-size: 18px; font-weight: 900; color: #000000; letter-spacing: 2px; text-transform: uppercase; margin: 0; font-family: var(--font-display); }
 
       /* Receiver / Billed-To Block */
       .hw-statement-receiver-block { display: flex; justify-content: space-between; align-items: flex-start; padding: 12px 20px; background: #FAFBFD; border-bottom: 1px solid #E5E7EB; flex-shrink: 0; gap: 16px; }
