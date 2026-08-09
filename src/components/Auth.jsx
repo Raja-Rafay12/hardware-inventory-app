@@ -6,6 +6,7 @@ function Auth({ onAuthSuccess }) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [organizationName, setOrganizationName] = useState('');
+  const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -99,6 +100,7 @@ function Auth({ onAuthSuccess }) {
           firstName,
           lastName,
           organizationName,
+          phone,
           email,
           password
         });
@@ -408,6 +410,18 @@ function Auth({ onAuthSuccess }) {
                   onChange={(e) => setOrganizationName(e.target.value)}
                   disabled={loading}
                   required
+                />
+              </div>
+
+              <div className="auth-field">
+                <label className="auth-label">PHONE NUMBER</label>
+                <input
+                  type="tel"
+                  className="auth-input-profile"
+                  placeholder="0332-8898666"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  disabled={loading}
                 />
               </div>
             </>

@@ -167,8 +167,11 @@ async function runMigrations() {
     try {
       await client.query('ALTER TABLE public.invoices ADD COLUMN IF NOT EXISTS customer_email VARCHAR(255) DEFAULT \'\'');
       await client.query('ALTER TABLE public.invoices ADD COLUMN IF NOT EXISTS customer_phone VARCHAR(50) DEFAULT \'\'');
+      await client.query('ALTER TABLE public.users ADD COLUMN IF NOT EXISTS phone VARCHAR(50) DEFAULT \'\'');
       await client.query('ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS phone VARCHAR(50) DEFAULT \'\'');
+      await client.query('ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS email VARCHAR(255) DEFAULT \'\'');
       await client.query('ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS whatsapp VARCHAR(50) DEFAULT \'\'');
+      await client.query('ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS payment_details TEXT DEFAULT \'\'');
       await client.query('ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS bank_details TEXT DEFAULT \'\'');
       await client.query('ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS address TEXT DEFAULT \'\'');
       console.log("Database schema updates verified successfully.");
@@ -209,8 +212,9 @@ function createWindow() {
 ipcMain.handle('auth:signup', async (event, signupData) => {
   const client = await pool.connect();
   try {
-    const { firstName, lastName, organizationName, email, password } = signupData;
+    const { firstName, lastName, organizationName, email, password, phone } = signupData;
     const formattedEmail = String(email).trim().toLowerCase();
+    const formattedPhone = String(phone || '').trim();
     
     // Check if user already exists
     const checkUser = await client.query('SELECT id FROM public.users WHERE email = $1', [formattedEmail]);
@@ -225,10 +229,10 @@ ipcMain.handle('auth:signup', async (event, signupData) => {
 
     // Insert user
     const insertResult = await client.query(
-      `INSERT INTO public.users(first_name, last_name, organization_name, email, password_hash)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING id, email, first_name, last_name, organization_name`,
-      [firstName.trim(), lastName.trim(), organizationName.trim(), formattedEmail, passwordHash]
+      `INSERT INTO public.users(first_name, last_name, organization_name, email, password_hash, phone)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, email, first_name, last_name, organization_name, phone`,
+      [firstName.trim(), lastName.trim(), organizationName.trim(), formattedEmail, passwordHash, formattedPhone]
     );
 
     const user = insertResult.rows[0];
@@ -236,9 +240,9 @@ ipcMain.handle('auth:signup', async (event, signupData) => {
 
     // Seed default settings automatically using their organization name as the shop name
     await client.query(
-      `INSERT INTO public.settings (user_id, shop_name, currency_symbol, invoice_counter, low_stock_default)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [currentUserId, user.organization_name, 'Rs ', 1, 5]
+      `INSERT INTO public.settings (user_id, shop_name, phone, email, currency_symbol, invoice_counter, low_stock_default)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [currentUserId, user.organization_name, formattedPhone, formattedEmail, 'Rs ', 1, 5]
     );
 
     await client.query('COMMIT');
@@ -251,7 +255,8 @@ ipcMain.handle('auth:signup', async (event, signupData) => {
       email: user.email,
       firstName: user.first_name,
       lastName: user.last_name,
-      organizationName: user.organization_name
+      organizationName: user.organization_name,
+      phone: user.phone || ''
     };
   } catch (err) {
     await client.query('ROLLBACK');
@@ -286,7 +291,8 @@ ipcMain.handle('auth:login', async (event, email, password) => {
       email: user.email,
       firstName: user.first_name,
       lastName: user.last_name,
-      organizationName: user.organization_name
+      organizationName: user.organization_name,
+      phone: user.phone || ''
     };
   } catch (err) {
     console.error("Login error:", err);
@@ -369,7 +375,7 @@ ipcMain.handle('auth:current-user', async () => {
   if (!currentUserId) return null;
   try {
     const result = await pool.query(
-      'SELECT id, email, first_name as "firstName", last_name as "lastName", organization_name as "organizationName" FROM public.users WHERE id = $1',
+      'SELECT id, email, first_name as "firstName", last_name as "lastName", organization_name as "organizationName", phone FROM public.users WHERE id = $1',
       [currentUserId]
     );
     return result.rows[0] || null;
@@ -447,8 +453,10 @@ ipcMain.handle('db:fetch-data', async () => {
     const settings = dbSettings ? {
       shopName: dbSettings.shop_name,
       phone: dbSettings.phone || '',
+      email: dbSettings.email || '',
       whatsapp: dbSettings.whatsapp || '',
-      bankDetails: dbSettings.bank_details || '',
+      paymentDetails: dbSettings.payment_details || dbSettings.bank_details || '',
+      bankDetails: dbSettings.bank_details || dbSettings.payment_details || '',
       address: dbSettings.address || '',
       currencySymbol: dbSettings.currency_symbol,
       invoiceCounter: dbSettings.invoice_counter,
@@ -628,21 +636,28 @@ ipcMain.handle('db:save-expenses', async (event, expenses) => {
 ipcMain.handle('db:save-settings', async (event, settings) => {
   if (!currentUserId) throw new Error('Unauthorized');
   try {
+    const paymentInfo = settings.paymentDetails || settings.bankDetails || '';
     await pool.query(
-      `INSERT INTO public.settings (user_id, shop_name, phone, whatsapp, bank_details, address, currency_symbol, invoice_counter, low_stock_default)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `INSERT INTO public.settings (user_id, shop_name, phone, email, whatsapp, payment_details, bank_details, address, currency_symbol, invoice_counter, low_stock_default)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        ON CONFLICT (user_id) 
        DO UPDATE SET 
          shop_name = $2, 
          phone = $3, 
-         whatsapp = $4, 
-         bank_details = $5, 
-         address = $6, 
-         currency_symbol = $7, 
-         invoice_counter = $8, 
-         low_stock_default = $9`,
-      [currentUserId, settings.shopName, settings.phone || '', settings.whatsapp || '', settings.bankDetails || '', settings.address || '', settings.currencySymbol, settings.invoiceCounter, settings.lowStockDefault]
+         email = $4,
+         whatsapp = $5, 
+         payment_details = $6,
+         bank_details = $7, 
+         address = $8, 
+         currency_symbol = $9, 
+         invoice_counter = $10, 
+         low_stock_default = $11`,
+      [currentUserId, settings.shopName, settings.phone || '', settings.email || '', settings.whatsapp || '', paymentInfo, paymentInfo, settings.address || '', settings.currencySymbol, settings.invoiceCounter, settings.lowStockDefault]
     );
+    // Also update phone on user record if provided
+    if (settings.phone) {
+      await pool.query('UPDATE public.users SET phone = $1 WHERE id = $2', [settings.phone, currentUserId]);
+    }
     return { success: true };
   } catch (err) {
     console.error("Save settings error:", err);

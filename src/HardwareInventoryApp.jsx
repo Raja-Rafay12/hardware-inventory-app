@@ -56,7 +56,9 @@ const fmtDayLabel = (key) => {
 const DEFAULT_SETTINGS = { 
   shopName: "My Hardware Shop", 
   phone: "",
+  email: "",
   whatsapp: "",
+  paymentDetails: "",
   bankDetails: "",
   address: "",
   currencySymbol: "Rs ", 
@@ -1976,8 +1978,21 @@ export default function HardwareInventoryApp({ user, onLogout }) {
         
         let finalSettings = data.settings;
         if (!finalSettings) {
-          finalSettings = DEFAULT_SETTINGS;
-          await window.db.saveSettings(DEFAULT_SETTINGS);
+          finalSettings = {
+            ...DEFAULT_SETTINGS,
+            shopName: user.organizationName || DEFAULT_SETTINGS.shopName,
+            email: user.email || '',
+            phone: user.phone || ''
+          };
+          await window.db.saveSettings(finalSettings);
+        } else {
+          finalSettings = {
+            ...DEFAULT_SETTINGS,
+            ...finalSettings,
+            email: finalSettings.email || user.email || '',
+            phone: finalSettings.phone || user.phone || '',
+            shopName: finalSettings.shopName || user.organizationName || DEFAULT_SETTINGS.shopName
+          };
         }
 
         let finalProducts = data.products || [];
@@ -3815,25 +3830,19 @@ Thank you!`;
     <div className="hw-modal-overlay" onClick={onClose}>
       <div className="hw-modal hw-statement-modal" onClick={e => e.stopPropagation()}>
         <div className="hw-statement-card" id="hw-print-area">
-          {/* Header Banner - Organization Details */}
+          {/* Header Banner - Centered Big & Bold Organization Name */}
           <div className="hw-statement-banner">
-            <div className="hw-statement-banner-left">
-              <h2 className="hw-statement-shop-name">{settings.shopName || "Organization Name"}</h2>
-              <div className="hw-statement-contact-row">
+            <div className="hw-statement-type-corner">
+              <span className="hw-statement-type-pill">ESTIMATE</span>
+            </div>
+            <div className="hw-statement-center-header">
+              <h1 className="hw-statement-org-title">{settings.shopName || "MY ORGANIZATION"}</h1>
+              <div className="hw-statement-contact-center">
                 {settings.phone && <span>📞 Phone: <strong>{settings.phone}</strong></span>}
+                {settings.email && <span>✉️ Email: <strong>{settings.email}</strong></span>}
                 {settings.whatsapp && <span>💬 WhatsApp: <strong>{settings.whatsapp}</strong></span>}
                 {settings.address && <span>📍 {settings.address}</span>}
               </div>
-            </div>
-            <div className="hw-statement-banner-right">
-              {settings.bankDetails ? (
-                <div className="hw-statement-bank-card">
-                  <div className="hw-statement-bank-title">💳 Bank / JazzCash / EasyPaisa</div>
-                  <div className="hw-statement-bank-text">{settings.bankDetails}</div>
-                </div>
-              ) : (
-                <div className="hw-statement-type-pill">ESTIMATE</div>
-              )}
             </div>
           </div>
 
@@ -3842,7 +3851,7 @@ Thank you!`;
             <div className="hw-statement-receiver-info">
               <div className="hw-statement-section-label">BILL TO / RECEIVER:</div>
               <div className="hw-statement-customer-name">{quote.customerName || "Walk-in Customer"}</div>
-              {quote.customerPhone && <div className="hw-statement-customer-sub">📞 Phone: {quote.customerPhone}</div>}
+              {quote.customerPhone && <div className="hw-statement-customer-sub">📞 Phone: <strong>{quote.customerPhone}</strong></div>}
               {quote.customerEmail && <div className="hw-statement-customer-sub">✉️ Email: {quote.customerEmail}</div>}
             </div>
             <div className="hw-statement-doc-info">
@@ -3860,6 +3869,14 @@ Thank you!`;
               </div>
             </div>
           </div>
+
+          {/* Dedicated Payment Details Bar */}
+          {(settings.paymentDetails || settings.bankDetails) && (
+            <div className="hw-statement-payment-bar">
+              <span className="hw-statement-payment-tag">💳 PAYMENT DETAILS</span>
+              <span className="hw-statement-payment-text">{settings.paymentDetails || settings.bankDetails}</span>
+            </div>
+          )}
 
           {/* Summary Box */}
           <div className="hw-statement-summary-box">
@@ -4369,25 +4386,19 @@ Thank you for your business!`;
     <div className="hw-modal-overlay" onClick={onClose}>
       <div className="hw-modal hw-statement-modal" onClick={e => e.stopPropagation()}>
         <div className="hw-statement-card" id="hw-print-area">
-          {/* Header Banner - Organization Details */}
+          {/* Header Banner - Centered Big & Bold Organization Name */}
           <div className="hw-statement-banner">
-            <div className="hw-statement-banner-left">
-              <h2 className="hw-statement-shop-name">{settings.shopName || "Organization Name"}</h2>
-              <div className="hw-statement-contact-row">
+            <div className="hw-statement-type-corner">
+              <span className="hw-statement-type-pill">TAX INVOICE</span>
+            </div>
+            <div className="hw-statement-center-header">
+              <h1 className="hw-statement-org-title">{settings.shopName || "MY ORGANIZATION"}</h1>
+              <div className="hw-statement-contact-center">
                 {settings.phone && <span>📞 Phone: <strong>{settings.phone}</strong></span>}
+                {settings.email && <span>✉️ Email: <strong>{settings.email}</strong></span>}
                 {settings.whatsapp && <span>💬 WhatsApp: <strong>{settings.whatsapp}</strong></span>}
                 {settings.address && <span>📍 {settings.address}</span>}
               </div>
-            </div>
-            <div className="hw-statement-banner-right">
-              {settings.bankDetails ? (
-                <div className="hw-statement-bank-card">
-                  <div className="hw-statement-bank-title">💳 Bank / JazzCash / EasyPaisa</div>
-                  <div className="hw-statement-bank-text">{settings.bankDetails}</div>
-                </div>
-              ) : (
-                <div className="hw-statement-type-pill">TAX INVOICE</div>
-              )}
             </div>
           </div>
 
@@ -4396,7 +4407,7 @@ Thank you for your business!`;
             <div className="hw-statement-receiver-info">
               <div className="hw-statement-section-label">BILL TO / RECEIVER:</div>
               <div className="hw-statement-customer-name">{invoice.customerName || "Walk-in Customer"}</div>
-              {invoice.customerPhone && <div className="hw-statement-customer-sub">📞 Phone: {invoice.customerPhone}</div>}
+              {invoice.customerPhone && <div className="hw-statement-customer-sub">📞 Phone: <strong>{invoice.customerPhone}</strong></div>}
               {invoice.customerEmail && <div className="hw-statement-customer-sub">✉️ Email: {invoice.customerEmail}</div>}
             </div>
             <div className="hw-statement-doc-info">
@@ -4414,6 +4425,14 @@ Thank you for your business!`;
               </div>
             </div>
           </div>
+
+          {/* Dedicated Payment Details Bar */}
+          {(settings.paymentDetails || settings.bankDetails) && (
+            <div className="hw-statement-payment-bar">
+              <span className="hw-statement-payment-tag">💳 PAYMENT DETAILS</span>
+              <span className="hw-statement-payment-text">{settings.paymentDetails || settings.bankDetails}</span>
+            </div>
+          )}
 
           {/* Summary Box */}
           <div className="hw-statement-summary-box">
@@ -4528,22 +4547,29 @@ function SettingsModal({ settings, onClose, onSave }) {
   const [form, setForm] = useState(settings);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   return (
-    <ModalShell onClose={onClose} title="Organization & Shop Settings">
+    <ModalShell onClose={onClose} title="Organization & Profile Settings">
       <div className="hw-form-grid">
-        <Field label="Organization / Shop Name" span={2}>
+        <Field label="Organization / Business Name" span={2}>
           <input value={form.shopName || ""} onChange={e => set("shopName", e.target.value)} placeholder="e.g. ABC Hardware & Electricals" />
         </Field>
         <Field label="Phone Number">
           <input value={form.phone || ""} onChange={e => set("phone", e.target.value)} placeholder="e.g. 0332-8898666" />
         </Field>
+        <Field label="Email Address">
+          <input value={form.email || ""} onChange={e => set("email", e.target.value)} placeholder="e.g. info@organization.com" />
+        </Field>
         <Field label="WhatsApp Number">
           <input value={form.whatsapp || ""} onChange={e => set("whatsapp", e.target.value)} placeholder="e.g. 0332-8898666" />
         </Field>
-        <Field label="Bank / Account / JazzCash / EasyPaisa Details" span={2}>
-          <input value={form.bankDetails || ""} onChange={e => set("bankDetails", e.target.value)} placeholder="e.g. JazzCash / EasyPaisa: 0332-8898666 (Title: ABC Traders) / Bank Alfalah: 1234-5678" />
+        <Field label="Shop Address / Location">
+          <input value={form.address || ""} onChange={e => set("address", e.target.value)} placeholder="e.g. Main Market, Shop #12" />
         </Field>
-        <Field label="Address / Shop Location (optional)" span={2}>
-          <input value={form.address || ""} onChange={e => set("address", e.target.value)} placeholder="e.g. Main Market, Hardware Plaza, Shop #12" />
+        <Field label="Payment Details (Bank / JazzCash / EasyPaisa)" span={2}>
+          <input 
+            value={form.paymentDetails || form.bankDetails || ""} 
+            onChange={e => { set("paymentDetails", e.target.value); set("bankDetails", e.target.value); }} 
+            placeholder="e.g. JazzCash: 0332-8898666 (Title: ABC Traders) | Bank Alfalah: 1234-5678" 
+          />
         </Field>
         <Field label="Currency symbol">
           <input value={form.currencySymbol || ""} onChange={e => set("currencySymbol", e.target.value)} maxLength={6} />
@@ -4919,16 +4945,13 @@ function Style() {
       .hw-statement-card { background: #FFFFFF; overflow-y: auto; flex: 1; min-height: 0; font-family: var(--font-body); display: flex; flex-direction: column; width: 100%; position: relative; }
       .hw-statement-modal .hw-modal-actions { flex-shrink: 0; margin-top: 0; background: #F9FAFB; border-top: 1px solid #E5E7EB; padding: 12px 20px; z-index: 10; }
       
-      /* Orange Top Banner (Organization Info) */
-      .hw-statement-banner { background: #EA580C; color: #FFFFFF; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-shrink: 0; }
-      .hw-statement-banner-left { display: flex; flex-direction: column; gap: 4px; }
-      .hw-statement-shop-name { font-size: 20px; font-weight: 800; font-family: var(--font-display); letter-spacing: -0.2px; margin: 0; }
-      .hw-statement-contact-row { display: flex; flex-wrap: wrap; gap: 12px; font-size: 11.5px; opacity: 0.95; }
-      .hw-statement-banner-right { display: flex; align-items: center; }
-      .hw-statement-bank-card { background: rgba(255, 255, 255, 0.18); border: 1px solid rgba(255, 255, 255, 0.35); padding: 6px 12px; border-radius: 7px; text-align: right; max-width: 360px; }
-      .hw-statement-bank-title { font-size: 9.5px; text-transform: uppercase; font-weight: 700; opacity: 0.9; letter-spacing: 0.5px; }
-      .hw-statement-bank-text { font-size: 12px; font-weight: 600; word-break: break-word; }
-      .hw-statement-type-pill { background: #FFFFFF; color: #EA580C; font-weight: 800; font-size: 11px; padding: 5px 12px; border-radius: 6px; letter-spacing: 0.5px; }
+      /* Orange Top Banner (Centered Big & Bold Organization Name) */
+      .hw-statement-banner { background: #EA580C; color: #FFFFFF; padding: 16px 20px 14px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 6px; flex-shrink: 0; }
+      .hw-statement-type-corner { position: absolute; top: 12px; right: 16px; }
+      .hw-statement-type-pill { background: #FFFFFF; color: #EA580C; font-weight: 800; font-size: 10.5px; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+      .hw-statement-center-header { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
+      .hw-statement-org-title { font-size: 24px; font-weight: 800; font-family: var(--font-display); letter-spacing: -0.3px; margin: 0 0 4px 0; text-transform: uppercase; color: #FFFFFF; text-shadow: 0 1px 2px rgba(0,0,0,0.15); line-height: 1.2; }
+      .hw-statement-contact-center { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 14px; font-size: 12px; opacity: 0.95; }
 
       /* Receiver / Billed-To Block */
       .hw-statement-receiver-block { display: flex; justify-content: space-between; align-items: flex-start; padding: 12px 20px; background: #FAFBFD; border-bottom: 1px solid #E5E7EB; flex-shrink: 0; gap: 16px; }
@@ -4940,6 +4963,11 @@ function Style() {
       .hw-statement-doc-row { font-size: 12px; color: #4B5563; }
       .hw-statement-doc-label { color: #6B7280; margin-right: 6px; }
       .hw-statement-doc-val { font-weight: 600; color: #111827; font-family: var(--font-mono); }
+
+      /* Dedicated Payment Details Bar */
+      .hw-statement-payment-bar { margin: 10px 20px 0; background: #FFFBEB; border: 1px dashed #F59E0B; border-radius: 6px; padding: 8px 14px; display: flex; align-items: center; gap: 12px; font-size: 12px; flex-shrink: 0; }
+      .hw-statement-payment-tag { font-weight: 800; color: #B45309; font-size: 10.5px; letter-spacing: 0.5px; text-transform: uppercase; flex-shrink: 0; }
+      .hw-statement-payment-text { font-weight: 600; color: #92400E; word-break: break-word; }
 
       /* Summary Box */
       .hw-statement-summary-box { border: 1px solid #E5E7EB; border-radius: 8px; margin: 12px 20px 10px; display: grid; grid-template-columns: repeat(4, 1fr); background: #FAFBFD; overflow: hidden; flex-shrink: 0; }
