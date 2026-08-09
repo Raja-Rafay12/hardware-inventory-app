@@ -1927,6 +1927,8 @@ export default function HardwareInventoryApp({ user, onLogout }) {
   const [discount, setDiscount] = useState(0);
   const [lastInvoice, setLastInvoice] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [editingInvoice, setEditingInvoice] = useState(null);
+  const [editingQuotation, setEditingQuotation] = useState(null);
 
   const [quotationCart, setQuotationCart] = useState([]);
   const [quotationCustName, setQuotationCustName] = useState("");
@@ -2106,10 +2108,26 @@ export default function HardwareInventoryApp({ user, onLogout }) {
             persistSettings={persistSettings}
             invoices={invoices} showToast={showToast} setLastInvoice={setLastInvoice}
             setView={setView} user={user}
+            editingInvoice={editingInvoice} setEditingInvoice={setEditingInvoice}
           />
         )}
         {view === "invoices" && (
-          <InvoiceHistory invoices={invoices} settings={settings} persistInvoices={persistInvoices} persistProducts={persistProducts} products={products} showToast={showToast} />
+          <InvoiceHistory invoices={invoices} settings={settings} persistInvoices={persistInvoices} persistProducts={persistProducts} products={products} showToast={showToast}
+            onEditInvoice={(inv) => {
+              setEditingInvoice(inv);
+              setCart(inv.items.map(i => {
+                const prod = products.find(p => p.id === i.productId);
+                const originalStock = prod ? prod.quantity + i.qty : i.qty;
+                return { productId: i.productId, name: i.name, unit: i.unit, qty: i.qty, costPrice: i.costPrice, markup: i.markup, maxStock: originalStock };
+              }));
+              setCustomerName(inv.customerName === "Walk-in Customer" ? "" : (inv.customerName || ""));
+              setCustomerEmail(inv.customerEmail || "");
+              setCustomerPhone(inv.customerPhone || "");
+              setDiscount(inv.discount || 0);
+              setView("newInvoice");
+              showToast(`Loaded ${inv.invoiceNumber} for editing`);
+            }}
+          />
         )}
         {view === "ledger" && (
           <DailyLedger invoices={invoices} expenses={expenses} settings={settings} persistExpenses={persistExpenses} showToast={showToast} products={products} />
@@ -2124,7 +2142,9 @@ export default function HardwareInventoryApp({ user, onLogout }) {
             discount={quotationDiscount} setDiscount={setQuotationDiscount}
             quotations={quotations} setQuotations={setQuotations}
             showToast={showToast} setView={setView}
+            editingQuotation={editingQuotation} setEditingQuotation={setEditingQuotation}
             onConvertToInvoice={(items, custName, custEmail, custPhone, disc) => {
+              setEditingInvoice(null);
               setCart(items.map(i => ({ productId: i.productId, name: i.name, unit: i.unit, qty: i.qty, costPrice: i.costPrice, markup: i.markup, maxStock: products.find(p => p.id === i.productId)?.quantity || 9999 })));
               setCustomerName(custName);
               setCustomerEmail(custEmail);
@@ -3189,7 +3209,7 @@ function BulkEditModal({ type, selectedCount, onClose, onSave }) {
 /* ---------------------------------------------------------
    NEW INVOICE
 --------------------------------------------------------- */
-function NewInvoice({ products, settings, cart, setCart, customerName, setCustomerName, customerEmail, setCustomerEmail, customerPhone, setCustomerPhone, discount, setDiscount, persistProducts, persistInvoices, persistSettings, invoices, showToast, setLastInvoice, setView, user }) {
+function NewInvoice({ products, settings, cart, setCart, customerName, setCustomerName, customerEmail, setCustomerEmail, customerPhone, setCustomerPhone, discount, setDiscount, persistProducts, persistInvoices, persistSettings, invoices, showToast, setLastInvoice, setView, user, editingInvoice, setEditingInvoice }) {
   const [search, setSearch] = useState("");
   const [preview, setPreview] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -3222,29 +3242,69 @@ function NewInvoice({ products, settings, cart, setCart, customerName, setCustom
 
   const overStock = cart.filter(i => i.qty > i.maxStock);
 
+  const cancelEdit = () => {
+    setEditingInvoice(null);
+    setCart([]);
+    setCustomerName("");
+    setCustomerEmail("");
+    setCustomerPhone("");
+    setDiscount(0);
+    showToast("Invoice edit cancelled");
+  };
+
   const saveInvoice = async () => {
     if (cart.length === 0) return;
     setIsSaving(true);
-    const invoiceNumber = `INV-${String(settings.invoiceCounter).padStart(4, "0")}`;
+    const isEdit = !!editingInvoice;
+    const invoiceNumber = isEdit ? editingInvoice.invoiceNumber : `INV-${String(settings.invoiceCounter).padStart(4, "0")}`;
+    const invoiceId = isEdit ? editingInvoice.id : uid();
+    const invoiceDate = isEdit ? editingInvoice.date : new Date().toISOString();
+
     try {
       const invoice = {
-        id: uid(),
+        id: invoiceId,
         invoiceNumber,
         customerName: customerName.trim(),
         customerEmail: customerEmail.trim(),
         customerPhone: customerPhone.trim(),
-        date: new Date().toISOString(),
+        date: invoiceDate,
         items: cartWithPrice.map(i => ({ productId: i.productId, name: i.name, unit: i.unit, qty: i.qty, costPrice: i.costPrice, markup: i.markup, price: i.sellPrice, lineTotal: i.lineTotal })),
         subtotal, discount: discountAmt, total, totalCost, profit,
       };
-      const nextInvoices = [...invoices, invoice];
-      const nextProducts = products.map(p => {
-        const item = cart.find(i => i.productId === p.id);
-        return item ? { ...p, quantity: Math.max(0, p.quantity - item.qty) } : p;
-      });
+
+      let nextProducts;
+      if (isEdit) {
+        const restoredMap = {};
+        for (const item of editingInvoice.items) {
+          restoredMap[item.productId] = (restoredMap[item.productId] || 0) + item.qty;
+        }
+        const cartMap = {};
+        for (const item of cart) {
+          cartMap[item.productId] = (cartMap[item.productId] || 0) + item.qty;
+        }
+
+        nextProducts = products.map(p => {
+          const restored = restoredMap[p.id] || 0;
+          const deducted = cartMap[p.id] || 0;
+          const netChange = restored - deducted;
+          return { ...p, quantity: Math.max(0, p.quantity + netChange) };
+        });
+      } else {
+        nextProducts = products.map(p => {
+          const item = cart.find(i => i.productId === p.id);
+          return item ? { ...p, quantity: Math.max(0, p.quantity - item.qty) } : p;
+        });
+      }
+
+      const nextInvoices = isEdit
+        ? invoices.map(i => i.id === invoiceId ? invoice : i)
+        : [...invoices, invoice];
+
       await persistInvoices(nextInvoices);
       await persistProducts(nextProducts);
-      await persistSettings({ ...settings, invoiceCounter: settings.invoiceCounter + 1 });
+      if (!isEdit) {
+        await persistSettings({ ...settings, invoiceCounter: settings.invoiceCounter + 1 });
+      }
       
       // Automatically email invoice via Google SMTP if customer email is provided
       if (invoice.customerEmail) {
@@ -3254,14 +3314,14 @@ function NewInvoice({ products, settings, cart, setCart, customerName, setCustom
             console.error("Email send error:", res.error);
             showToast("Invoice saved, but email dispatch failed", "err");
           } else {
-            showToast("Invoice saved & emailed to customer!");
+            showToast(isEdit ? "Invoice updated & emailed!" : "Invoice saved & emailed to customer!");
           }
         } catch (err) {
           console.error("Email dispatch exception:", err);
           showToast("Invoice saved, but email dispatch failed", "err");
         }
       } else {
-        showToast(`${invoiceNumber} saved`);
+        showToast(isEdit ? `${invoiceNumber} updated!` : `${invoiceNumber} saved`);
       }
 
       setCart([]);
@@ -3269,6 +3329,7 @@ function NewInvoice({ products, settings, cart, setCart, customerName, setCustom
       setCustomerEmail("");
       setCustomerPhone("");
       setDiscount(0);
+      setEditingInvoice(null);
       setLastInvoice(invoice);
       setPreview(invoice);
     } catch (err) {
@@ -3281,8 +3342,18 @@ function NewInvoice({ products, settings, cart, setCart, customerName, setCustom
 
   return (
     <div className="hw-view">
-      {isSaving && <LoadingOverlay message="Saving transaction & dispatching email..." />}
-      <ViewHeader eyebrow="Point of sale" title="New Invoice" />
+      {isSaving && <LoadingOverlay message={editingInvoice ? "Updating transaction..." : "Saving transaction & dispatching email..."} />}
+      <ViewHeader 
+        eyebrow={editingInvoice ? "Editing Transaction" : "Point of sale"} 
+        title={editingInvoice ? `Edit Invoice (${editingInvoice.invoiceNumber})` : "New Invoice"}
+        right={
+          editingInvoice ? (
+            <button className="hw-btn-ghost" onClick={cancelEdit} style={{ color: "var(--danger)" }}>
+              Cancel Edit
+            </button>
+          ) : null
+        }
+      />
 
       <div className="hw-invoice-layout">
         <div className="hw-card">
@@ -3376,8 +3447,13 @@ function NewInvoice({ products, settings, cart, setCart, customerName, setCustom
             </div>
           )}
           <button className="hw-btn-accent hw-btn-block" disabled={cart.length === 0} onClick={saveInvoice}>
-            <Save size={15} /> Save invoice
+            <Save size={15} /> {editingInvoice ? "Update Invoice" : "Save invoice"}
           </button>
+          {editingInvoice && (
+            <button className="hw-btn-ghost hw-btn-block" onClick={cancelEdit} style={{ marginTop: '8px' }}>
+              Cancel Edit
+            </button>
+          )}
         </div>
       </div>
 
@@ -3391,7 +3467,7 @@ function NewInvoice({ products, settings, cart, setCart, customerName, setCustom
 /* ---------------------------------------------------------
    QUOTATIONS & ESTIMATES VIEW
 --------------------------------------------------------- */
-function QuotationView({ products, settings, cart, setCart, customerName, setCustomerName, customerEmail, setCustomerEmail, customerPhone, setCustomerPhone, discount, setDiscount, quotations, setQuotations, showToast, setView, onConvertToInvoice }) {
+function QuotationView({ products, settings, cart, setCart, customerName, setCustomerName, customerEmail, setCustomerEmail, customerPhone, setCustomerPhone, discount, setDiscount, quotations, setQuotations, showToast, setView, onConvertToInvoice, editingQuotation, setEditingQuotation }) {
   const [subView, setSubView] = useState("new"); // "new" | "history"
   const [search, setSearch] = useState("");
   const [preview, setPreview] = useState(null);
@@ -3423,28 +3499,48 @@ function QuotationView({ products, settings, cart, setCart, customerName, setCus
   const total = Math.max(0, subtotal - discountAmt);
   const profit = total - totalCost;
 
+  const cancelEdit = () => {
+    setEditingQuotation(null);
+    setCart([]);
+    setCustomerName("");
+    setCustomerEmail("");
+    setCustomerPhone("");
+    setDiscount(0);
+    showToast("Quotation edit cancelled");
+  };
+
   const saveQuotation = () => {
     if (cart.length === 0) return;
-    const quotationNumber = `QT-${String(quotations.length + 1).padStart(4, "0")}`;
+    const isEdit = !!editingQuotation;
+    const quotationNumber = isEdit ? editingQuotation.quotationNumber : `QT-${String(quotations.length + 1).padStart(4, "0")}`;
+    const quoteId = isEdit ? editingQuotation.id : uid();
+    const quoteDate = isEdit ? editingQuotation.date : new Date().toISOString();
+
     const quote = {
-      id: uid(),
+      id: quoteId,
       quotationNumber,
       customerName: customerName.trim() || "Walk-in Customer",
       customerEmail: customerEmail.trim(),
       customerPhone: customerPhone.trim(),
-      date: new Date().toISOString(),
+      date: quoteDate,
       items: cartWithPrice.map(i => ({ productId: i.productId, name: i.name, unit: i.unit, qty: i.qty, costPrice: i.costPrice, markup: i.markup, price: i.sellPrice, lineTotal: i.lineTotal })),
       subtotal, discount: discountAmt, total, totalCost, profit,
     };
-    setQuotations([quote, ...quotations]);
+
+    const nextQuotations = isEdit
+      ? quotations.map(q => q.id === quoteId ? quote : q)
+      : [quote, ...quotations];
+
+    setQuotations(nextQuotations);
     
     setCart([]);
     setCustomerName("");
     setCustomerEmail("");
     setCustomerPhone("");
     setDiscount(0);
+    setEditingQuotation(null);
     setPreview(quote);
-    showToast(`${quotationNumber} saved locally!`);
+    showToast(isEdit ? `${quotationNumber} updated successfully!` : `${quotationNumber} saved locally!`);
   };
 
   const deleteQuotation = (id) => {
@@ -3460,16 +3556,23 @@ function QuotationView({ products, settings, cart, setCart, customerName, setCus
   return (
     <div className="hw-view">
       <ViewHeader
-        eyebrow="Estimates Manager"
-        title="Quotations"
+        eyebrow={editingQuotation ? "Editing Estimate" : "Estimates Manager"}
+        title={editingQuotation ? `Edit Quotation (${editingQuotation.quotationNumber})` : "Quotations"}
         right={
-          <div style={{ display: "flex", border: "1px solid var(--border)", borderRadius: "6px", overflow: "hidden" }}>
-            <button className={`hw-btn-ghost ${subView === "new" ? "active" : ""}`} onClick={() => setSubView("new")} style={{ border: "none", borderRadius: 0, padding: "8px 16px", background: subView === "new" ? "var(--border)" : "transparent" }}>
-              New Quote
-            </button>
-            <button className={`hw-btn-ghost ${subView === "history" ? "active" : ""}`} onClick={() => setSubView("history")} style={{ border: "none", borderRadius: 0, padding: "8px 16px", background: subView === "history" ? "var(--border)" : "transparent" }}>
-              Quote History ({quotations.length})
-            </button>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            {editingQuotation && (
+              <button className="hw-btn-ghost" onClick={cancelEdit} style={{ color: "var(--danger)" }}>
+                Cancel Edit
+              </button>
+            )}
+            <div style={{ display: "flex", border: "1px solid var(--border)", borderRadius: "6px", overflow: "hidden" }}>
+              <button className={`hw-btn-ghost ${subView === "new" ? "active" : ""}`} onClick={() => setSubView("new")} style={{ border: "none", borderRadius: 0, padding: "8px 16px", background: subView === "new" ? "var(--border)" : "transparent" }}>
+                {editingQuotation ? "Edit Quote" : "New Quote"}
+              </button>
+              <button className={`hw-btn-ghost ${subView === "history" ? "active" : ""}`} onClick={() => setSubView("history")} style={{ border: "none", borderRadius: 0, padding: "8px 16px", background: subView === "history" ? "var(--border)" : "transparent" }}>
+                Quote History ({quotations.length})
+              </button>
+            </div>
           </div>
         }
       />
@@ -3556,8 +3659,13 @@ function QuotationView({ products, settings, cart, setCart, customerName, setCus
             <div className="hw-hint" style={{ marginTop: -8, marginBottom: 8 }}>0–100 = percent, above 100 = flat amount off</div>
             <div className="hw-summary-row hw-summary-total"><span>Total</span><span className="hw-mono">{cs}{fmtNum(total)}</span></div>
             <button className="hw-btn-accent hw-btn-block" disabled={cart.length === 0} onClick={saveQuotation}>
-              <Save size={15} /> Save &amp; Preview Quote
+              <Save size={15} /> {editingQuotation ? "Update Quotation" : "Save & Preview Quote"}
             </button>
+            {editingQuotation && (
+              <button className="hw-btn-ghost hw-btn-block" onClick={cancelEdit} style={{ marginTop: '8px' }}>
+                Cancel Edit
+              </button>
+            )}
           </div>
         </div>
       ) : (
@@ -3588,6 +3696,18 @@ function QuotationView({ products, settings, cart, setCart, customerName, setCus
                     <td className="hw-mono">{cs}{fmtNum(q.total)}</td>
                     <td style={{ textAlign: "right" }}>
                       <div style={{ display: "inline-flex", gap: "8px" }}>
+                        <button className="hw-btn-ghost" style={{ padding: "6px 10px", fontSize: "12px", display: "inline-flex", alignItems: "center", gap: "4px" }} onClick={() => {
+                          setEditingQuotation(q);
+                          setCart(q.items.map(i => ({ productId: i.productId, name: i.name, unit: i.unit, qty: i.qty, costPrice: i.costPrice, markup: i.markup })));
+                          setCustomerName(q.customerName === "Walk-in Customer" ? "" : (q.customerName || ""));
+                          setCustomerEmail(q.customerEmail || "");
+                          setCustomerPhone(q.customerPhone || "");
+                          setDiscount(q.discount || 0);
+                          setSubView("new");
+                          showToast(`Loaded ${q.quotationNumber} for editing`);
+                        }}>
+                          <Pencil size={12} /> Edit
+                        </button>
                         <button className="hw-btn-ghost" style={{ padding: "6px 10px", fontSize: "12px" }} onClick={() => setPreview(q)}>
                           View/Print
                         </button>
@@ -3611,13 +3731,27 @@ function QuotationView({ products, settings, cart, setCart, customerName, setCus
       )}
 
       {preview && (
-        <QuotationPreviewModal quote={preview} settings={settings} onClose={() => setPreview(null)} />
+        <QuotationPreviewModal 
+          quote={preview} 
+          settings={settings} 
+          onClose={() => setPreview(null)} 
+          onEdit={(q) => {
+            setEditingQuotation(q);
+            setCart(q.items.map(i => ({ productId: i.productId, name: i.name, unit: i.unit, qty: i.qty, costPrice: i.costPrice, markup: i.markup })));
+            setCustomerName(q.customerName === "Walk-in Customer" ? "" : (q.customerName || ""));
+            setCustomerEmail(q.customerEmail || "");
+            setCustomerPhone(q.customerPhone || "");
+            setDiscount(q.discount || 0);
+            setSubView("new");
+            showToast(`Loaded ${q.quotationNumber} for editing`);
+          }}
+        />
       )}
     </div>
   );
 }
 
-function QuotationPreviewModal({ quote, settings, onClose }) {
+function QuotationPreviewModal({ quote, settings, onClose, onEdit }) {
   const cs = settings.currencySymbol;
 
   const formatPhoneForWhatsapp = (phone) => {
@@ -3753,6 +3887,11 @@ Thank you!`;
 
         {/* Action buttons */}
         <div className="hw-modal-actions hw-no-print" style={{ padding: "16px 24px", background: "#F9FAFB", borderTop: "1px solid #E5E7EB" }}>
+          {onEdit && (
+            <button className="hw-btn-ghost" onClick={() => { onClose(); onEdit(quote); }}>
+              <Pencil size={14} /> Edit Quotation
+            </button>
+          )}
           <div style={{ flex: 1 }} />
           {quote.customerPhone && (
             <button className="hw-btn-accent" onClick={sendWhatsapp} style={{ background: "#25D366", borderColor: "#25D366" }}>
@@ -3770,7 +3909,7 @@ Thank you!`;
 /* ---------------------------------------------------------
    INVOICE HISTORY
 --------------------------------------------------------- */
-function InvoiceHistory({ invoices, settings, persistInvoices, persistProducts, products, showToast }) {
+function InvoiceHistory({ invoices, settings, persistInvoices, persistProducts, products, showToast, onEditInvoice }) {
   const [query, setQuery] = useState("");
   const [preview, setPreview] = useState(null);
   const cs = settings.currencySymbol;
@@ -3805,6 +3944,15 @@ function InvoiceHistory({ invoices, settings, persistInvoices, persistProducts, 
           <div key={inv.id} className="hw-invoice-card" onClick={() => setPreview(inv)}>
             <div className="hw-invoice-card-header">
               <span className="hw-invoice-card-number">#{inv.invoiceNumber}</span>
+              {onEditInvoice && (
+                <button
+                  className="hw-btn-ghost"
+                  style={{ padding: "3px 8px", fontSize: "11px", display: "inline-flex", alignItems: "center", gap: "3px" }}
+                  onClick={(e) => { e.stopPropagation(); onEditInvoice(inv); }}
+                >
+                  <Pencil size={11} /> Edit
+                </button>
+              )}
             </div>
             <div className="hw-invoice-card-body">
               <div className="hw-invoice-card-details">
@@ -3827,7 +3975,13 @@ function InvoiceHistory({ invoices, settings, persistInvoices, persistProducts, 
         )}
       </div>
       {preview && (
-        <InvoicePreviewModal invoice={preview} settings={settings} onClose={() => setPreview(null)} onDelete={(restock) => deleteInvoice(preview, restock)} />
+        <InvoicePreviewModal 
+          invoice={preview} 
+          settings={settings} 
+          onClose={() => setPreview(null)} 
+          onDelete={(restock) => deleteInvoice(preview, restock)} 
+          onEdit={onEditInvoice}
+        />
       )}
     </div>
   );
@@ -4122,7 +4276,7 @@ function ExpenseModal({ expense, defaultDay, onClose, onSave, onDelete, products
 /* ---------------------------------------------------------
    INVOICE PREVIEW / PRINT
 --------------------------------------------------------- */
-function InvoicePreviewModal({ invoice, settings, onClose, onDelete }) {
+function InvoicePreviewModal({ invoice, settings, onClose, onDelete, onEdit }) {
   const cs = settings.currencySymbol;
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -4266,6 +4420,11 @@ Thank you for your business!`;
               <button className="hw-btn-danger" onClick={() => onDelete(true)}>Delete &amp; restock items</button>
               <button className="hw-btn-ghost" onClick={() => onDelete(false)}>Delete only</button>
             </>
+          )}
+          {onEdit && (
+            <button className="hw-btn-ghost" onClick={() => { onClose(); onEdit(invoice); }}>
+              <Pencil size={14} /> Edit Invoice
+            </button>
           )}
           <div style={{ flex: 1 }} />
           {invoice.customerPhone && (

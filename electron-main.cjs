@@ -545,12 +545,23 @@ ipcMain.handle('db:save-invoices', async (event, invoices) => {
       );
     }
 
-    // Insert new invoices (invoices are read-only, so only need to insert new ones)
-    const newInvoices = invoices.filter(i => !currentDbIds.includes(i.id));
-    for (const inv of newInvoices) {
+    // Upsert all incoming invoices (handles both new and updated records)
+    for (const inv of invoices) {
       await client.query(
         `INSERT INTO public.invoices (id, user_id, invoice_number, customer_name, customer_email, customer_phone, date, subtotal, discount, total, total_cost, profit, items)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+         ON CONFLICT (user_id, id) DO UPDATE SET
+           invoice_number = EXCLUDED.invoice_number,
+           customer_name = EXCLUDED.customer_name,
+           customer_email = EXCLUDED.customer_email,
+           customer_phone = EXCLUDED.customer_phone,
+           date = EXCLUDED.date,
+           subtotal = EXCLUDED.subtotal,
+           discount = EXCLUDED.discount,
+           total = EXCLUDED.total,
+           total_cost = EXCLUDED.total_cost,
+           profit = EXCLUDED.profit,
+           items = EXCLUDED.items`,
         [inv.id, currentUserId, inv.invoiceNumber, inv.customerName || '', inv.customerEmail || '', inv.customerPhone || '', inv.date, inv.subtotal, inv.discount, inv.total, inv.totalCost, inv.profit, JSON.stringify(inv.items)]
       );
     }
