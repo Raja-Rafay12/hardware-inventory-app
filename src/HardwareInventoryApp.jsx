@@ -4598,44 +4598,67 @@ function SettingsModal({ settings, onClose, onSave }) {
           <input value={form.address || ""} onChange={e => set("address", e.target.value)} placeholder="e.g. Main Market, Shop #12" />
         </Field>
 
-        {/* Bank & Payment Provider Dropdown Builder */}
-        <div style={{ gridColumn: "span 2", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 8, padding: "12px 14px", marginTop: 4 }}>
-          <div style={{ fontSize: "11px", fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>
-            🏦 Add Bank / JazzCash / EasyPaisa Info
+        {/* Single Unified Professional Bank & Payment Details Container */}
+        <div style={{ gridColumn: "span 2", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 10, padding: "14px 16px", marginTop: 4, display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #E2E8F0", paddingBottom: 8 }}>
+            <span style={{ fontSize: "12px", fontWeight: 700, color: "#1E293B", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              🏦 Bank &amp; Payment Details
+            </span>
+            <span style={{ fontSize: "11px", color: "#64748B" }}>
+              Displayed on Invoices &amp; Quotations
+            </span>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1.2fr 1.2fr auto", gap: 8, alignItems: "flex-end" }}>
-            <Field label="Bank / Wallet">
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <Field label="Select Bank / Mobile Wallet">
               <select value={selectedBank} onChange={e => setSelectedBank(e.target.value)}>
                 {POPULAR_BANKS.map(b => (
                   <option key={b} value={b}>{b}</option>
                 ))}
               </select>
             </Field>
+
             <Field label="Account / Phone / IBAN">
-              <input value={accNumber} onChange={e => setAccNumber(e.target.value)} placeholder="e.g. 03461270679" />
+              <input 
+                value={accNumber} 
+                onChange={e => setAccNumber(e.target.value)} 
+                placeholder="e.g. 03461270679" 
+              />
             </Field>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 10, alignItems: "flex-end" }}>
             <Field label="Account Title (optional)">
-              <input value={accTitle} onChange={e => setAccTitle(e.target.value)} placeholder="e.g. Raja Rafay" />
+              <input 
+                value={accTitle} 
+                onChange={e => setAccTitle(e.target.value)} 
+                placeholder="e.g. Raja Rafay" 
+              />
             </Field>
             <button 
               type="button" 
               className="hw-btn-accent" 
               onClick={addBankDetails} 
-              style={{ height: 38, padding: "0 12px", whiteSpace: "nowrap", marginBottom: 1 }}
+              style={{ height: 38, padding: "0 16px", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 6 }}
             >
-              + Add
+              + Add Account
             </button>
           </div>
-        </div>
 
-        <Field label="Payment Details (Shown on Quotations & Invoices)" span={2}>
-          <input 
-            value={form.paymentDetails || form.bankDetails || ""} 
-            onChange={e => { set("paymentDetails", e.target.value); set("bankDetails", e.target.value); }} 
-            placeholder="e.g. Meezan Bank: 03461270679 (Title: ABC) | JazzCash: 03328898666" 
-          />
-          <span className="hw-hint">You can type directly or use the bank dropdown above to add accounts.</span>
-        </Field>
+          <div style={{ borderTop: "1px dashed #CBD5E1", paddingTop: 10 }}>
+            <Field label="Payment Details Line (Shown on Statement)">
+              <input 
+                value={form.paymentDetails || form.bankDetails || ""} 
+                onChange={e => { set("paymentDetails", e.target.value); set("bankDetails", e.target.value); }} 
+                placeholder="e.g. Meezan Bank: 03461270679 (Title: ABC) | JazzCash: 03328898666" 
+                style={{ background: "#FFFFFF", fontWeight: 500 }}
+              />
+              <span className="hw-hint" style={{ marginTop: 4 }}>
+                This is the exact line shown in the payment details bar on your invoices &amp; estimates.
+              </span>
+            </Field>
+          </div>
+        </div>
 
         <Field label="Currency symbol">
           <input value={form.currencySymbol || ""} onChange={e => set("currencySymbol", e.target.value)} maxLength={6} />
