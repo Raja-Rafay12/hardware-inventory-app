@@ -4543,9 +4543,42 @@ Thank you for your business!`;
 /* ---------------------------------------------------------
    SETTINGS MODAL
 --------------------------------------------------------- */
+const POPULAR_BANKS = [
+  "Meezan Bank",
+  "JazzCash",
+  "EasyPaisa",
+  "Bank Alfalah",
+  "HBL (Habib Bank Limited)",
+  "UBL (United Bank Limited)",
+  "MCB Bank",
+  "Allied Bank (ABL)",
+  "Faysal Bank",
+  "Bank of Punjab (BOP)",
+  "Askari Bank",
+  "Standard Chartered",
+  "SadaPay",
+  "NayaPay",
+  "Other Bank / Custom"
+];
+
 function SettingsModal({ settings, onClose, onSave }) {
   const [form, setForm] = useState(settings);
+  const [selectedBank, setSelectedBank] = useState("Meezan Bank");
+  const [accNumber, setAccNumber] = useState("");
+  const [accTitle, setAccTitle] = useState("");
+
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const addBankDetails = () => {
+    if (!accNumber.trim()) return;
+    const formatted = `${selectedBank}: ${accNumber.trim()}${accTitle.trim() ? ` (Title: ${accTitle.trim()})` : ""}`;
+    const current = form.paymentDetails || form.bankDetails || "";
+    const updated = current ? `${current} | ${formatted}` : formatted;
+    set("paymentDetails", updated);
+    set("bankDetails", updated);
+    setAccNumber("");
+  };
+
   return (
     <ModalShell onClose={onClose} title="Organization & Profile Settings">
       <div className="hw-form-grid">
@@ -4564,13 +4597,46 @@ function SettingsModal({ settings, onClose, onSave }) {
         <Field label="Shop Address / Location">
           <input value={form.address || ""} onChange={e => set("address", e.target.value)} placeholder="e.g. Main Market, Shop #12" />
         </Field>
-        <Field label="Payment Details (Bank / JazzCash / EasyPaisa)" span={2}>
+
+        {/* Bank & Payment Provider Dropdown Builder */}
+        <div style={{ gridColumn: "span 2", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 8, padding: "12px 14px", marginTop: 4 }}>
+          <div style={{ fontSize: "11px", fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>
+            🏦 Add Bank / JazzCash / EasyPaisa Info
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1.2fr 1.2fr auto", gap: 8, alignItems: "flex-end" }}>
+            <Field label="Bank / Wallet">
+              <select value={selectedBank} onChange={e => setSelectedBank(e.target.value)}>
+                {POPULAR_BANKS.map(b => (
+                  <option key={b} value={b}>{b}</option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Account / Phone / IBAN">
+              <input value={accNumber} onChange={e => setAccNumber(e.target.value)} placeholder="e.g. 03461270679" />
+            </Field>
+            <Field label="Account Title (optional)">
+              <input value={accTitle} onChange={e => setAccTitle(e.target.value)} placeholder="e.g. Raja Rafay" />
+            </Field>
+            <button 
+              type="button" 
+              className="hw-btn-accent" 
+              onClick={addBankDetails} 
+              style={{ height: 38, padding: "0 12px", whiteSpace: "nowrap", marginBottom: 1 }}
+            >
+              + Add
+            </button>
+          </div>
+        </div>
+
+        <Field label="Payment Details (Shown on Quotations & Invoices)" span={2}>
           <input 
             value={form.paymentDetails || form.bankDetails || ""} 
             onChange={e => { set("paymentDetails", e.target.value); set("bankDetails", e.target.value); }} 
-            placeholder="e.g. JazzCash: 0332-8898666 (Title: ABC Traders) | Bank Alfalah: 1234-5678" 
+            placeholder="e.g. Meezan Bank: 03461270679 (Title: ABC) | JazzCash: 03328898666" 
           />
+          <span className="hw-hint">You can type directly or use the bank dropdown above to add accounts.</span>
         </Field>
+
         <Field label="Currency symbol">
           <input value={form.currencySymbol || ""} onChange={e => set("currencySymbol", e.target.value)} maxLength={6} />
         </Field>
@@ -4889,14 +4955,14 @@ function Style() {
 
       /* MODALS */
       .hw-modal-overlay { position: fixed; inset: 0; background: rgba(17, 24, 39, 0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 20px; overflow-y: auto; }
-      .hw-modal { background: var(--surface); border-radius: 12px; width: 100%; max-width: 460px; padding: 22px 24px; max-height: 88vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); }
+      .hw-modal { background: var(--surface); border-radius: 12px; width: 100%; max-width: 540px; padding: 22px 24px; max-height: 88vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); }
       .hw-modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
       .hw-modal-head h3 { font-family: var(--font-display); font-size: 18px; font-weight: 700; margin: 0; }
       .hw-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
       .hw-field { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; }
       .hw-field-label { color: var(--ink-soft); font-weight: 600; }
-      .hw-field input { border: 1px solid #D1D5DB; border-radius: 7px; padding: 8px 10px; font-size: 13.5px; font-family: var(--font-body); background: #FFFFFF; color: var(--ink); outline: none; transition: all 0.15s ease; }
-      .hw-field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15); }
+      .hw-field input, .hw-field select { border: 1px solid #D1D5DB; border-radius: 7px; padding: 8px 10px; font-size: 13.5px; font-family: var(--font-body); background: #FFFFFF; color: var(--ink); outline: none; transition: all 0.15s ease; }
+      .hw-field input:focus, .hw-field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15); }
       .hw-hint { font-size: 11px; color: var(--ink-soft); }
       .hw-modal-actions { display: flex; align-items: center; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
       .hw-warn-banner { display: flex; align-items: center; gap: 7px; background: var(--warn-tint); color: var(--warn); font-size: 12.5px; font-weight: 600; padding: 8px 12px; border-radius: 8px; margin-top: 10px; }
